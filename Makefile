@@ -1,8 +1,8 @@
 build: *.c *.h
 	gcc *.c -o mainReference
 
-clean: mainReference KeccakSpongeIntermediateValues*
-	rm mainReference KeccakSpongeIntermediateValues*
+clean: mainReference KeccakSpongeIntermediateValues* KeccakDuplexIntermediateValues* KeccakPermutationIntermediateValues*
+	rm mainReference KeccakSpongeIntermediateValues* KeccakDuplexIntermediateValues* KeccakPermutationIntermediateValues*
 
 run: mainReference
 	./mainReference
