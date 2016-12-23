@@ -95,9 +95,10 @@ void displaySpongeIntermediateValuesOne(const unsigned char *message, unsigned i
 
 void displaySpongeIntermediateValuesFew(FILE *f, unsigned int rate, unsigned int capacity)
 {
-    const unsigned char *message1 = "\x53\x58\x7B\xC8";
+    const unsigned char message1[] = "\x53\x58\x7B\xC8";
     unsigned int message1Length = 29;
-    const unsigned char *message2 = 
+
+    const unsigned char message2[] = 
         "\x83\xAF\x34\x27\x9C\xCB\x54\x30\xFE\xBE\xC0\x7A\x81\x95\x0D\x30"
         "\xF4\xB6\x6F\x48\x48\x26\xAF\xEE\x74\x56\xF0\x07\x1A\x51\xE1\xBB"
         "\xC5\x55\x70\xB5\xCC\x7E\xC6\xF9\x30\x9C\x17\xBF\x5B\xEF\xDD\x7C"
@@ -155,7 +156,7 @@ void displaySpongeIntermediateValues()
     }
 }
 
-void displayDuplexIntermediateValuesOne(FILE *f, unsigned int rate, unsigned int capacity)
+void displayDuplexIntermediateValuesOne(unsigned int rate, unsigned int capacity)
 {
     duplexState state;
     unsigned char input[512];
@@ -209,7 +210,7 @@ void displayDuplexIntermediateValues()
             displaySetIntermediateValueFile(f);
             displaySetLevel(2);
 
-            displayDuplexIntermediateValuesOne(f, rate, capacity);
+            displayDuplexIntermediateValuesOne(rate, capacity);
 
             fclose(f);
             displaySetIntermediateValueFile(0);
@@ -221,7 +222,7 @@ void displayDuplexIntermediateValues()
 
 void displayTest2040(unsigned int rate, unsigned int capacity)
 {
-    const char  testVectorMessage[] =
+    const unsigned char testVectorMessage[] =
         "\x3A\x3A\x81\x9C\x48\xEF\xDE\x2A\xD9\x14\xFB\xF0\x0E\x18\xAB\x6B"
         "\xC4\xF1\x45\x13\xAB\x27\xD0\xC1\x78\xA1\x88\xB6\x14\x31\xE7\xF5"
         "\x62\x3C\xB6\x6B\x23\x34\x67\x75\xD3\x86\xB5\x0E\x98\x2C\x49\x3A"
@@ -331,7 +332,7 @@ void displayAllInOneTestBytes(unsigned int rate, unsigned int capacity)
     unsigned char input[512];
     unsigned char output[refLenMax];
     unsigned char ref[refLen];
-    unsigned int inlen, offset, size;
+    unsigned int inlen, offset;
     int result;
     spongeState state;
 

@@ -1,7 +1,7 @@
 build: *.c *.h
-	gcc *.c -o mainReference
+	gcc *.c -o mainReference -Wall -Wextra -std=c99 -pedantic
 
-clean: mainReference KeccakSpongeIntermediateValues* KeccakDuplexIntermediateValues* KeccakPermutationIntermediateValues*
+clean:
 	rm mainReference KeccakSpongeIntermediateValues* KeccakDuplexIntermediateValues* KeccakPermutationIntermediateValues*
 
 run: mainReference
