@@ -14,7 +14,7 @@ http://creativecommons.org/publicdomain/zero/1.0/
 #include <stdint.h>
 #include <string.h>
 
-#include "KeccakNISTInterface.h"
+#include "KeccakSponge.h"
 #include "KeccakF-1600-reference.h"
 
 // Internal constants
