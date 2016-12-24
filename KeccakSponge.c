@@ -27,11 +27,11 @@ int InitSponge(spongeState *state, unsigned int rate, unsigned int capacity)
         return 1;
     }
 
-    KeccakInitialize();
     state->rate = rate;
     state->capacity = capacity;
     state->fixedOutputLength = 0;
-    KeccakInitializeState(state->state);
+    KeccakInitialize(state->state);
+    
     memset(state->dataQueue, 0, KeccakMaximumRateInBytes);
     state->bitsInQueue = 0;
     state->squeezing = 0;
@@ -116,7 +116,7 @@ void PadAndSwitchToSqueezingPhase(spongeState *state)
 
     KeccakExtract(state->state, state->dataQueue, state->rate/64);
     state->bitsAvailableForSqueezing = state->rate;
-    
+
     state->squeezing = 1;
 }
 

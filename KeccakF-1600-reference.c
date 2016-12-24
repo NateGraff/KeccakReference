@@ -89,14 +89,10 @@ void KeccakInitializeRhoOffsets()
     }
 }
 
-void KeccakInitialize()
+void KeccakInitialize(unsigned char * state)
 {
     KeccakInitializeRoundConstants();
     KeccakInitializeRhoOffsets();
-}
-
-void KeccakInitializeState(unsigned char *state)
-{
     memset(state, 0, KeccakPermutationSizeInBytes);
 }
 

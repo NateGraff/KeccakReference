@@ -14,8 +14,7 @@ http://creativecommons.org/publicdomain/zero/1.0/
 #pragma once
 
 // Initialization
-void KeccakInitialize( void );
-void KeccakInitializeState(unsigned char *state);
+void KeccakInitialize(unsigned char * state);
 
 // Absorb and Permute
 void KeccakAbsorb(unsigned char *state, const unsigned char *data, unsigned int laneCount);
