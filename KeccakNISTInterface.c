@@ -12,8 +12,8 @@ http://creativecommons.org/publicdomain/zero/1.0/
 */
 
 #include <string.h>
+
 #include "KeccakNISTInterface.h"
-#include "KeccakF-1600-interface.h"
 
 HashReturn Init(hashState *state, int hashbitlen)
 {
@@ -42,8 +42,9 @@ HashReturn Init(hashState *state, int hashbitlen)
 
 HashReturn Update(hashState *state, const BitSequence *data, DataLength databitlen)
 {
-    if ((databitlen % 8) == 0)
+    if ((databitlen % 8) == 0) {
         return Absorb((spongeState*)state, data, databitlen);
+    }
     else {
         HashReturn ret = Absorb((spongeState*)state, data, databitlen - (databitlen % 8));
         if (ret == SUCCESS) {
@@ -52,8 +53,9 @@ HashReturn Update(hashState *state, const BitSequence *data, DataLength databitl
             lastByte = data[databitlen/8] >> (8 - (databitlen % 8));
             return Absorb((spongeState*)state, &lastByte, databitlen % 8);
         }
-        else
+        else {
             return ret;
+        }
     }
 }
 
@@ -67,15 +69,24 @@ HashReturn Hash(int hashbitlen, const BitSequence *data, DataLength databitlen, 
     hashState state;
     HashReturn result;
 
-    if ((hashbitlen != 224) && (hashbitlen != 256) && (hashbitlen != 384) && (hashbitlen != 512))
+    if ((hashbitlen != 224) && (hashbitlen != 256) && (hashbitlen != 384) && (hashbitlen != 512)) {
         return BAD_HASHLEN; // Only the four fixed output lengths available through this API
+    }
+
     result = Init(&state, hashbitlen);
-    if (result != SUCCESS)
+
+    if (result != SUCCESS) {
         return result;
+    }
+
     result = Update(&state, data, databitlen);
-    if (result != SUCCESS)
+    
+    if (result != SUCCESS) {
         return result;
+    }
+
     result = Final(&state, hashval);
+    
     return result;
 }
 

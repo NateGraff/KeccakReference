@@ -11,10 +11,24 @@ and related or neighboring rights to the source code in this file.
 http://creativecommons.org/publicdomain/zero/1.0/
 */
 
-#ifndef _KeccakPermutationReference_h_
-#define _KeccakPermutationReference_h_
+#ifndef _KeccakPermutationInterface_h_
+#define _KeccakPermutationInterface_h_
 
-void displayRoundConstants(FILE *f);
-void displayRhoOffsets(FILE *f);
+void KeccakInitialize( void );
+void KeccakInitializeState(unsigned char *state);
+void KeccakPermutation(unsigned char *state);
+
+void KeccakAbsorb576bits(unsigned char *state, const unsigned char *data);
+void KeccakAbsorb832bits(unsigned char *state, const unsigned char *data);
+void KeccakAbsorb1024bits(unsigned char *state, const unsigned char *data);
+void KeccakAbsorb1088bits(unsigned char *state, const unsigned char *data);
+void KeccakAbsorb1152bits(unsigned char *state, const unsigned char *data);
+void KeccakAbsorb1344bits(unsigned char *state, const unsigned char *data);
+
+void KeccakAbsorb(unsigned char *state, const unsigned char *data, unsigned int laneCount);
+
+void KeccakExtract1024bits(const unsigned char *state, unsigned char *data);
+
+void KeccakExtract(const unsigned char *state, unsigned char *data, unsigned int laneCount);
 
 #endif

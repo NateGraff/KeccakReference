@@ -12,18 +12,21 @@ http://creativecommons.org/publicdomain/zero/1.0/
 */
 
 #include <string.h>
+
 #include "KeccakSponge.h"
-#include "KeccakF-1600-interface.h"
-#ifdef KeccakReference
-#include "displayIntermediateValues.h"
-#endif
+#include "KeccakF-1600-reference.h"
 
 int InitSponge(spongeState *state, unsigned int rate, unsigned int capacity)
 {
     if (rate+capacity != 1600)
+    {
         return 1;
+    }
     if ((rate <= 0) || (rate >= 1600) || ((rate % 64) != 0))
+    {
         return 1;
+    }
+
     KeccakInitialize();
     state->rate = rate;
     state->capacity = capacity;
@@ -40,40 +43,29 @@ int InitSponge(spongeState *state, unsigned int rate, unsigned int capacity)
 void AbsorbQueue(spongeState *state)
 {
     // state->bitsInQueue is assumed to be equal to state->rate
-    #ifdef KeccakReference
-    displayBytes(1, "Block to be absorbed", state->dataQueue, state->rate/8);
-    #endif
-#ifdef ProvideFast576
-    if (state->rate == 576)
+
+    if (state->rate == 576) {
         KeccakAbsorb576bits(state->state, state->dataQueue);
-    else 
-#endif
-#ifdef ProvideFast832
-    if (state->rate == 832)
+    }
+    else if (state->rate == 832) {
         KeccakAbsorb832bits(state->state, state->dataQueue);
-    else 
-#endif
-#ifdef ProvideFast1024
-    if (state->rate == 1024)
+    }
+    else if (state->rate == 1024) {
         KeccakAbsorb1024bits(state->state, state->dataQueue);
-    else 
-#endif
-#ifdef ProvideFast1088
-    if (state->rate == 1088)
+    }
+    else if (state->rate == 1088) {
         KeccakAbsorb1088bits(state->state, state->dataQueue);
-    else
-#endif
-#ifdef ProvideFast1152
-    if (state->rate == 1152)
+    }
+    else if (state->rate == 1152) {
         KeccakAbsorb1152bits(state->state, state->dataQueue);
-    else 
-#endif
-#ifdef ProvideFast1344
-    if (state->rate == 1344)
+    }
+    else if (state->rate == 1344) {
         KeccakAbsorb1344bits(state->state, state->dataQueue);
-    else 
-#endif
+    }
+    else {
         KeccakAbsorb(state->state, state->dataQueue, state->rate/64);
+    }
+
     state->bitsInQueue = 0;
 }
 
@@ -93,93 +85,61 @@ int Absorb(spongeState *state, const unsigned char *data, unsigned long long dat
         if ((state->bitsInQueue == 0) && (databitlen >= state->rate) && (i <= (databitlen-state->rate))) {
             wholeBlocks = (databitlen-i)/state->rate;
             curData = data+i/8;
-#ifdef ProvideFast576
+
             if (state->rate == 576) {
                 for(j=0; j<wholeBlocks; j++, curData+=576/8) {
-                    #ifdef KeccakReference
-                    displayBytes(1, "Block to be absorbed", curData, state->rate/8);
-                    #endif
                     KeccakAbsorb576bits(state->state, curData);
                 }
             }
-            else
-#endif
-#ifdef ProvideFast832
-            if (state->rate == 832) {
+            else if (state->rate == 832) {
                 for(j=0; j<wholeBlocks; j++, curData+=832/8) {
-                    #ifdef KeccakReference
-                    displayBytes(1, "Block to be absorbed", curData, state->rate/8);
-                    #endif
                     KeccakAbsorb832bits(state->state, curData);
                 }
             }
-            else
-#endif
-#ifdef ProvideFast1024
-            if (state->rate == 1024) {
+            else if (state->rate == 1024) {
                 for(j=0; j<wholeBlocks; j++, curData+=1024/8) {
-                    #ifdef KeccakReference
-                    displayBytes(1, "Block to be absorbed", curData, state->rate/8);
-                    #endif
                     KeccakAbsorb1024bits(state->state, curData);
                 }
             }
-            else
-#endif
-#ifdef ProvideFast1088
-            if (state->rate == 1088) {
+            else if (state->rate == 1088) {
                 for(j=0; j<wholeBlocks; j++, curData+=1088/8) {
-                    #ifdef KeccakReference
-                    displayBytes(1, "Block to be absorbed", curData, state->rate/8);
-                    #endif
                     KeccakAbsorb1088bits(state->state, curData);
                 }
             }
-            else
-#endif
-#ifdef ProvideFast1152
-            if (state->rate == 1152) {
+            else if (state->rate == 1152) {
                 for(j=0; j<wholeBlocks; j++, curData+=1152/8) {
-                    #ifdef KeccakReference
-                    displayBytes(1, "Block to be absorbed", curData, state->rate/8);
-                    #endif
                     KeccakAbsorb1152bits(state->state, curData);
                 }
             }
-            else
-#endif
-#ifdef ProvideFast1344
-            if (state->rate == 1344) {
+            else if (state->rate == 1344) {
                 for(j=0; j<wholeBlocks; j++, curData+=1344/8) {
-                    #ifdef KeccakReference
-                    displayBytes(1, "Block to be absorbed", curData, state->rate/8);
-                    #endif
                     KeccakAbsorb1344bits(state->state, curData);
                 }
             }
-            else
-#endif
-            {
+            else {
                 for(j=0; j<wholeBlocks; j++, curData+=state->rate/8) {
-                    #ifdef KeccakReference
-                    displayBytes(1, "Block to be absorbed", curData, state->rate/8);
-                    #endif
                     KeccakAbsorb(state->state, curData, state->rate/64);
                 }
             }
+
             i += wholeBlocks*state->rate;
         }
         else {
             partialBlock = (unsigned int)(databitlen - i);
-            if (partialBlock+state->bitsInQueue > state->rate)
+
+            if (partialBlock+state->bitsInQueue > state->rate) {
                 partialBlock = state->rate-state->bitsInQueue;
+            }
+
             partialByte = partialBlock % 8;
             partialBlock -= partialByte;
             memcpy(state->dataQueue+state->bitsInQueue/8, data+i/8, partialBlock/8);
             state->bitsInQueue += partialBlock;
             i += partialBlock;
-            if (state->bitsInQueue == state->rate)
+
+            if (state->bitsInQueue == state->rate) {
                 AbsorbQueue(state);
+            }
             if (partialByte > 0) {
                 unsigned char mask = (1 << partialByte)-1;
                 state->dataQueue[state->bitsInQueue/8] = data[i/8] & mask;
@@ -205,24 +165,15 @@ void PadAndSwitchToSqueezingPhase(spongeState *state)
     }
     state->dataQueue[(state->rate-1)/8] |= 1 << ((state->rate-1) % 8);
     AbsorbQueue(state);
-
-    #ifdef KeccakReference
-    displayText(1, "--- Switching to squeezing phase ---");
-    #endif
-#ifdef ProvideFast1024
+    
     if (state->rate == 1024) {
         KeccakExtract1024bits(state->state, state->dataQueue);
         state->bitsAvailableForSqueezing = 1024;
     }
-    else
-#endif
-    {
+    else {
         KeccakExtract(state->state, state->dataQueue, state->rate/64);
         state->bitsAvailableForSqueezing = state->rate;
     }
-    #ifdef KeccakReference
-    displayBytes(1, "Block available for squeezing", state->dataQueue, state->bitsAvailableForSqueezing/8);
-    #endif
     state->squeezing = 1;
 }
 
@@ -240,24 +191,21 @@ int Squeeze(spongeState *state, unsigned char *output, unsigned long long output
     while(i < outputLength) {
         if (state->bitsAvailableForSqueezing == 0) {
             KeccakPermutation(state->state);
-#ifdef ProvideFast1024
+
             if (state->rate == 1024) {
                 KeccakExtract1024bits(state->state, state->dataQueue);
                 state->bitsAvailableForSqueezing = 1024;
             }
-            else
-#endif
-            {
+            else {
                 KeccakExtract(state->state, state->dataQueue, state->rate/64);
                 state->bitsAvailableForSqueezing = state->rate;
             }
-            #ifdef KeccakReference
-            displayBytes(1, "Block available for squeezing", state->dataQueue, state->bitsAvailableForSqueezing/8);
-            #endif
         }
+
         partialBlock = state->bitsAvailableForSqueezing;
-        if ((unsigned long long)partialBlock > outputLength - i)
+        if ((unsigned long long)partialBlock > outputLength - i) {
             partialBlock = (unsigned int)(outputLength - i);
+        }
         memcpy(output+i/8, state->dataQueue+(state->rate-state->bitsAvailableForSqueezing)/8, partialBlock/8);
         state->bitsAvailableForSqueezing -= partialBlock;
         i += partialBlock;
