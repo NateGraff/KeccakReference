@@ -11,8 +11,7 @@ and related or neighboring rights to the source code in this file.
 http://creativecommons.org/publicdomain/zero/1.0/
 */
 
-#ifndef _KeccakDuplex_h_
-#define _KeccakDuplex_h_
+#pragma once
 
 #define KeccakPermutationSize 1600
 #define KeccakPermutationSizeInBytes (KeccakPermutationSize/8)
@@ -55,5 +54,3 @@ int InitDuplex(duplexState *state, unsigned int rate, unsigned int capacity);
   * @return Zero if successful, 1 otherwise.
   */
 int Duplexing(duplexState *state, const unsigned char *in, unsigned int inBitLen, unsigned char *out, unsigned int outBitLen);
-
-#endif

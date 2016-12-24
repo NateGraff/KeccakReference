@@ -12,7 +12,6 @@ http://creativecommons.org/publicdomain/zero/1.0/
 */
 
 #include <stdint.h>
-#include <stdio.h>
 #include <string.h>
 
 #include "brg_endian.h"
@@ -55,8 +54,9 @@ void fromBytesToWords(uint64_t *stateAsWords, const unsigned char *state)
 
     for(i=0; i<(KeccakPermutationSize/64); i++) {
         stateAsWords[i] = 0;
-        for(j=0; j<(64/8); j++)
+        for(j=0; j<(64/8); j++) {
             stateAsWords[i] |= (uint64_t)(state[i*(64/8)+j]) << (8*j);
+        }
     }
 }
 
@@ -64,9 +64,11 @@ void fromWordsToBytes(unsigned char *state, const uint64_t *stateAsWords)
 {
     unsigned int i, j;
 
-    for(i=0; i<(KeccakPermutationSize/64); i++)
-        for(j=0; j<(64/8); j++)
+    for(i=0; i<(KeccakPermutationSize/64); i++) {
+        for(j=0; j<(64/8); j++) {
             state[i*(64/8)+j] = (stateAsWords[i] >> (8*j)) & 0xFF;
+        }
+    }
 }
 
 /*
@@ -74,17 +76,15 @@ void fromWordsToBytes(unsigned char *state, const uint64_t *stateAsWords)
  */
 void KeccakPermutation(unsigned char *state)
 {
-#if (PLATFORM_BYTE_ORDER != IS_LITTLE_ENDIAN)
-    uint64_t stateAsWords[KeccakPermutationSize/64];
-#endif
-
-#if (PLATFORM_BYTE_ORDER == IS_LITTLE_ENDIAN)
+    #if (PLATFORM_BYTE_ORDER == IS_LITTLE_ENDIAN)
     KeccakPermutationOnWords((uint64_t*)state);
-#else
+    
+    #else
+    uint64_t stateAsWords[KeccakPermutationSize/64];
     fromBytesToWords(stateAsWords, state);
     KeccakPermutationOnWords(stateAsWords);
     fromWordsToBytes(state, stateAsWords);
-#endif
+    #endif
 }
 
 void KeccakPermutationAfterXor(unsigned char *state, const unsigned char *data, unsigned int dataLengthInBytes)
@@ -121,22 +121,27 @@ void theta(uint64_t *A)
 
     for(x=0; x<5; x++) {
         C[x] = 0; 
-        for(y=0; y<5; y++) 
+        for(y=0; y<5; y++) {
             C[x] ^= A[index(x, y)];
+        }
     }
-    for(x=0; x<5; x++)
+    for(x=0; x<5; x++) {
         D[x] = ROL64(C[(x+1)%5], 1) ^ C[(x+4)%5];
-    for(x=0; x<5; x++)
-        for(y=0; y<5; y++)
+    }
+    for(x=0; x<5; x++) {
+        for(y=0; y<5; y++) {
             A[index(x, y)] ^= D[x];
+        }
+    }
 }
 
 void rho(uint64_t *A)
 {
     unsigned int x, y;
 
-    for(x=0; x<5; x++) for(y=0; y<5; y++)
+    for(x=0; x<5; x++) for(y=0; y<5; y++) {
         A[index(x, y)] = ROL64(A[index(x, y)], KeccakRhoOffsets[index(x, y)]);
+    }
 }
 
 void pi(uint64_t *A)
@@ -144,10 +149,12 @@ void pi(uint64_t *A)
     unsigned int x, y;
     uint64_t tempA[25];
 
-    for(x=0; x<5; x++) for(y=0; y<5; y++)
+    for(x=0; x<5; x++) for(y=0; y<5; y++) {
         tempA[index(x, y)] = A[index(x, y)];
-    for(x=0; x<5; x++) for(y=0; y<5; y++)
+    }
+    for(x=0; x<5; x++) for(y=0; y<5; y++) {
         A[index(0*x+1*y, 2*x+3*y)] = tempA[index(x, y)];
+    }
 }
 
 void chi(uint64_t *A)
@@ -156,10 +163,12 @@ void chi(uint64_t *A)
     uint64_t C[5];
 
     for(y=0; y<5; y++) { 
-        for(x=0; x<5; x++)
+        for(x=0; x<5; x++) {
             C[x] = A[index(x, y)] ^ ((~A[index(x+1, y)]) & A[index(x+2, y)]);
-        for(x=0; x<5; x++)
+        }
+        for(x=0; x<5; x++) {
             A[index(x, y)] = C[x];
+        }
     }
 }
 
@@ -174,11 +183,13 @@ void iota(uint64_t *A, unsigned int indexRound)
 int LFSR86540(uint8_t *LFSR)
 {
     int result = ((*LFSR) & 0x01) != 0;
-    if (((*LFSR) & 0x80) != 0)
+    if (((*LFSR) & 0x80) != 0) {
         // Primitive polynomial over GF(2): x^8+x^6+x^5+x^4+1
         (*LFSR) = ((*LFSR) << 1) ^ 0x71;
-    else
+    }
+    else {
         (*LFSR) <<= 1;
+    }
     return result;
 }
 
@@ -191,8 +202,9 @@ void KeccakInitializeRoundConstants()
         KeccakRoundConstants[i] = 0;
         for(j=0; j<7; j++) {
             bitPosition = (1<<j)-1; //2^j-1
-            if (LFSR86540(&LFSRstate))
+            if (LFSR86540(&LFSRstate)) {
                 KeccakRoundConstants[i] ^= (uint64_t)1<<bitPosition;
+            }
         }
     }
 }

@@ -11,8 +11,7 @@ and related or neighboring rights to the source code in this file.
 http://creativecommons.org/publicdomain/zero/1.0/
 */
 
-#ifndef _KeccakSponge_h_
-#define _KeccakSponge_h_
+#pragma once
 
 #define KeccakPermutationSize 1600
 #define KeccakPermutationSizeInBytes (KeccakPermutationSize/8)
@@ -72,5 +71,3 @@ int Absorb(spongeState *state, const unsigned char *data, unsigned long long dat
   * @return Zero if successful, 1 otherwise.
   */
 int Squeeze(spongeState *state, unsigned char *output, unsigned long long outputLength);
-
-#endif

@@ -11,8 +11,7 @@ and related or neighboring rights to the source code in this file.
 http://creativecommons.org/publicdomain/zero/1.0/
 */
 
-#ifndef _KeccakNISTInterface_h_
-#define _KeccakNISTInterface_h_
+#pragma once
 
 #include "KeccakSponge.h"
 
@@ -33,6 +32,7 @@ typedef spongeState hashState;
   * @return SUCCESS if successful, BAD_HASHLEN if the value of hashbitlen is incorrect.
   */
 HashReturn Init(hashState *state, int hashbitlen);
+
 /**
   * Function to give input data for the sponge function to absorb.
   * @param  state       Pointer to the state of the sponge function initialized by Init().
@@ -44,6 +44,7 @@ HashReturn Init(hashState *state, int hashbitlen);
   * @return SUCCESS if successful, FAIL otherwise.
   */
 HashReturn Update(hashState *state, const BitSequence *data, DataLength databitlen);
+
 /**
   * Function to squeeze output data from the sponge function.
   * If @a hashbitlen was not 0 in the call to Init(), the number of output bits is equal to @a hashbitlen.
@@ -53,6 +54,7 @@ HashReturn Update(hashState *state, const BitSequence *data, DataLength databitl
   * @return SUCCESS if successful, FAIL otherwise.
   */
 HashReturn Final(hashState *state, BitSequence *hashval);
+
 /**
   * Function to compute a hash using the Keccak[r, c] sponge function.
   * The rate r and capacity c values are determined from @a hashbitlen.
@@ -66,5 +68,3 @@ HashReturn Final(hashState *state, BitSequence *hashval);
   * @return SUCCESS if successful, BAD_HASHLEN if the value of hashbitlen is incorrect.
   */
 HashReturn Hash(int hashbitlen, const BitSequence *data, DataLength databitlen, BitSequence *hashval);
-
-#endif

@@ -86,40 +86,47 @@ int Absorb(spongeState *state, const unsigned char *data, unsigned long long dat
             wholeBlocks = (databitlen-i)/state->rate;
             curData = data+i/8;
 
-            if (state->rate == 576) {
-                for(j=0; j<wholeBlocks; j++, curData+=576/8) {
-                    KeccakAbsorb576bits(state->state, curData);
-                }
-            }
-            else if (state->rate == 832) {
-                for(j=0; j<wholeBlocks; j++, curData+=832/8) {
-                    KeccakAbsorb832bits(state->state, curData);
-                }
-            }
-            else if (state->rate == 1024) {
-                for(j=0; j<wholeBlocks; j++, curData+=1024/8) {
-                    KeccakAbsorb1024bits(state->state, curData);
-                }
-            }
-            else if (state->rate == 1088) {
-                for(j=0; j<wholeBlocks; j++, curData+=1088/8) {
-                    KeccakAbsorb1088bits(state->state, curData);
-                }
-            }
-            else if (state->rate == 1152) {
-                for(j=0; j<wholeBlocks; j++, curData+=1152/8) {
-                    KeccakAbsorb1152bits(state->state, curData);
-                }
-            }
-            else if (state->rate == 1344) {
-                for(j=0; j<wholeBlocks; j++, curData+=1344/8) {
-                    KeccakAbsorb1344bits(state->state, curData);
-                }
-            }
-            else {
-                for(j=0; j<wholeBlocks; j++, curData+=state->rate/8) {
-                    KeccakAbsorb(state->state, curData, state->rate/64);
-                }
+            switch(state->rate) {
+                case 576:
+                    for(j=0; j<wholeBlocks; j++, curData+=576/8) {
+                        KeccakAbsorb576bits(state->state, curData);
+                    }
+                    break;
+
+                case 832:
+                    for(j=0; j<wholeBlocks; j++, curData+=832/8) {
+                        KeccakAbsorb832bits(state->state, curData);
+                    }
+                    break;
+
+                case 1024:
+                    for(j=0; j<wholeBlocks; j++, curData+=1024/8) {
+                        KeccakAbsorb1024bits(state->state, curData);
+                    }
+                    break;
+
+                case 1088:
+                    for(j=0; j<wholeBlocks; j++, curData+=1088/8) {
+                        KeccakAbsorb1088bits(state->state, curData);
+                    }
+                    break;
+
+                case 1152:
+                    for(j=0; j<wholeBlocks; j++, curData+=1152/8) {
+                        KeccakAbsorb1152bits(state->state, curData);
+                    }
+                    break;
+
+                case 1344:
+                    for(j=0; j<wholeBlocks; j++, curData+=1344/8) {
+                        KeccakAbsorb1344bits(state->state, curData);
+                    }
+                    break;
+            
+                default:
+                    for(j=0; j<wholeBlocks; j++, curData+=state->rate/8) {
+                        KeccakAbsorb(state->state, curData, state->rate/64);
+                    }
             }
 
             i += wholeBlocks*state->rate;

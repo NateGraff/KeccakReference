@@ -11,8 +11,7 @@ and related or neighboring rights to the source code in this file.
 http://creativecommons.org/publicdomain/zero/1.0/
 */
 
-#ifndef _displayIntermediateValues_h_
-#define _displayIntermediateValues_h_
+#pragma once
 
 #include <stdio.h>
 
@@ -25,5 +24,3 @@ void displayStateAs32bitWords(int level, const char *text, const unsigned int *s
 void displayStateAs64bitWords(int level, const char *text, const unsigned long long int *state);
 void displayRoundNumber(int level, unsigned int i);
 void displayText(int level, const char *text);
-
-#endif

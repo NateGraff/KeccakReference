@@ -11,9 +11,8 @@ and related or neighboring rights to the source code in this file.
 http://creativecommons.org/publicdomain/zero/1.0/
 */
 
-#include <string.h>
-
 #include "KeccakNISTInterface.h"
+#include "KeccakSponge.h"
 
 HashReturn Init(hashState *state, int hashbitlen)
 {

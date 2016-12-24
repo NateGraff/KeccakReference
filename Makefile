@@ -1,3 +1,5 @@
+all: build run
+
 build: *.c *.h
 	gcc *.c -o mainReference -Wall -Wextra -std=c99 -pedantic
 

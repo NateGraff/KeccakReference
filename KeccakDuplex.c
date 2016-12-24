@@ -12,6 +12,7 @@ http://creativecommons.org/publicdomain/zero/1.0/
 */
 
 #include <string.h>
+
 #include "KeccakDuplex.h"
 #include "KeccakF-1600-reference.h"
 

@@ -11,8 +11,7 @@ and related or neighboring rights to the source code in this file.
 http://creativecommons.org/publicdomain/zero/1.0/
 */
 
-#ifndef _KeccakPermutationInterface_h_
-#define _KeccakPermutationInterface_h_
+#pragma once
 
 void KeccakInitialize( void );
 void KeccakInitializeState(unsigned char *state);
@@ -30,5 +29,3 @@ void KeccakAbsorb(unsigned char *state, const unsigned char *data, unsigned int 
 void KeccakExtract1024bits(const unsigned char *state, unsigned char *data);
 
 void KeccakExtract(const unsigned char *state, unsigned char *data, unsigned int laneCount);
-
-#endif
