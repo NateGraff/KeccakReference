@@ -18,12 +18,10 @@ http://creativecommons.org/publicdomain/zero/1.0/
 
 int InitSponge(spongeState *state, unsigned int rate, unsigned int capacity)
 {
-    if (rate+capacity != 1600)
-    {
+    if (rate+capacity != 1600) {
         return 1;
     }
-    if ((rate <= 0) || (rate >= 1600) || ((rate % 64) != 0))
-    {
+    if ((rate <= 0) || (rate >= 1600) || ((rate % 64) != 0)) {
         return 1;
     }
 
@@ -55,10 +53,12 @@ int Absorb(spongeState *state, const unsigned char *data, unsigned long long dat
     unsigned int partialBlock, partialByte;
     const unsigned char *curData;
 
-    if ((state->bitsInQueue % 8) != 0)
+    if ((state->bitsInQueue % 8) != 0) {
         return 1; // Only the last call may contain a partial byte
-    if (state->squeezing)
+    }
+    if (state->squeezing) {
         return 1; // Too late for additional input
+    }
 
     i = 0;
     while(i < databitlen) {
@@ -125,10 +125,12 @@ int Squeeze(spongeState *state, unsigned char *output, unsigned long long output
     unsigned long long i;
     unsigned int partialBlock;
 
-    if (!state->squeezing)
+    if (!state->squeezing) {
         PadAndSwitchToSqueezingPhase(state);
-    if ((outputLength % 8) != 0)
+    }
+    if ((outputLength % 8) != 0) {
         return 1; // Only multiple of 8 bits are allowed, truncation can be done at user level
+    }
 
     i = 0;
     while(i < outputLength) {
