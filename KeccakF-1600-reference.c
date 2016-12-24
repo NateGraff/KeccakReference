@@ -14,22 +14,24 @@ http://creativecommons.org/publicdomain/zero/1.0/
 #include <stdint.h>
 #include <string.h>
 
-#include "brg_endian.h"
 #include "KeccakNISTInterface.h"
 #include "KeccakF-1600-reference.h"
 
+// Internal constants
 #define nrRounds 24
 uint64_t KeccakRoundConstants[nrRounds];
 #define nrLanes 25
 unsigned int KeccakRhoOffsets[nrLanes];
 
-void fromBytesToWords(uint64_t *stateAsWords, const unsigned char *state);
-void fromWordsToBytes(unsigned char *state, const uint64_t *stateAsWords);
+// Initialization
+int LFSR86540(uint8_t *LFSR);
+void KeccakInitializeRoundConstants();
+void KeccakInitializeRhoOffsets();
 
-void KeccakPermutation(unsigned char *state);
-void KeccakPermutationAfterXor(unsigned char *state, const unsigned char *data, unsigned int dataLengthInBytes);
-void KeccakPermutationOnWords(uint64_t *state);
+// Absorbtion
+void KeccakXorDataIntoState(unsigned char *state, const unsigned char *data, unsigned int dataLengthInBytes);
 
+// Internal logic
 #define index(x, y) (((x)%5)+5*((y)%5))
 #define ROL64(a, offset) ((offset != 0) ? ((((uint64_t)a) << offset) ^ (((uint64_t)a) >> (64-offset))) : a)
 
@@ -39,55 +41,69 @@ void pi(uint64_t *A);
 void chi(uint64_t *A);
 void iota(uint64_t *A, unsigned int indexRound);
 
-int LFSR86540(uint8_t *LFSR);
-void KeccakInitializeRoundConstants();
-void KeccakInitializeRhoOffsets();
-void KeccakInitialize();
-void KeccakInitializeState(unsigned char *state);
-
 /*
- * Bytes <-> Words Helper Functions
+ * Keccak Initialization Functions
  */
-void fromBytesToWords(uint64_t *stateAsWords, const unsigned char *state)
+int LFSR86540(uint8_t *LFSR)
 {
-    unsigned int i, j;
+    int result = ((*LFSR) & 0x01) != 0;
+    if (((*LFSR) & 0x80) != 0) {
+        // Primitive polynomial over GF(2): x^8+x^6+x^5+x^4+1
+        (*LFSR) = ((*LFSR) << 1) ^ 0x71;
+    }
+    else {
+        (*LFSR) <<= 1;
+    }
+    return result;
+}
 
-    for(i=0; i<(KeccakPermutationSize/64); i++) {
-        stateAsWords[i] = 0;
-        for(j=0; j<(64/8); j++) {
-            stateAsWords[i] |= (uint64_t)(state[i*(64/8)+j]) << (8*j);
+void KeccakInitializeRoundConstants()
+{
+    uint8_t LFSRstate = 0x01;
+    unsigned int i, j, bitPosition;
+
+    for(i=0; i<nrRounds; i++) {
+        KeccakRoundConstants[i] = 0;
+        for(j=0; j<7; j++) {
+            bitPosition = (1<<j)-1; //2^j-1
+            if (LFSR86540(&LFSRstate)) {
+                KeccakRoundConstants[i] ^= (uint64_t)1<<bitPosition;
+            }
         }
     }
 }
 
-void fromWordsToBytes(unsigned char *state, const uint64_t *stateAsWords)
+void KeccakInitializeRhoOffsets()
 {
-    unsigned int i, j;
+    unsigned int x, y, t, newX, newY;
 
-    for(i=0; i<(KeccakPermutationSize/64); i++) {
-        for(j=0; j<(64/8); j++) {
-            state[i*(64/8)+j] = (stateAsWords[i] >> (8*j)) & 0xFF;
-        }
+    KeccakRhoOffsets[index(0, 0)] = 0;
+    x = 1;
+    y = 0;
+    for(t=0; t<24; t++) {
+        KeccakRhoOffsets[index(x, y)] = ((t+1)*(t+2)/2) % 64;
+        newX = (0*x+1*y) % 5;
+        newY = (2*x+3*y) % 5;
+        x = newX;
+        y = newY;
     }
 }
 
-/*
- * Permutation Functions
- */
-void KeccakPermutation(unsigned char *state)
+void KeccakInitialize()
 {
-    #if (PLATFORM_BYTE_ORDER == IS_LITTLE_ENDIAN)
-    KeccakPermutationOnWords((uint64_t*)state);
-    
-    #else
-    uint64_t stateAsWords[KeccakPermutationSize/64];
-    fromBytesToWords(stateAsWords, state);
-    KeccakPermutationOnWords(stateAsWords);
-    fromWordsToBytes(state, stateAsWords);
-    #endif
+    KeccakInitializeRoundConstants();
+    KeccakInitializeRhoOffsets();
 }
 
-void KeccakPermutationAfterXor(unsigned char *state, const unsigned char *data, unsigned int dataLengthInBytes)
+void KeccakInitializeState(unsigned char *state)
+{
+    memset(state, 0, KeccakPermutationSizeInBytes);
+}
+
+/*
+ * Absorb and Permute
+ */
+void KeccakXorDataIntoState(unsigned char *state, const unsigned char *data, unsigned int dataLengthInBytes)
 {
     unsigned int i;
 
@@ -95,20 +111,24 @@ void KeccakPermutationAfterXor(unsigned char *state, const unsigned char *data, 
     {
         state[i] ^= data[i];
     }
-
-    KeccakPermutation(state);
 }
 
-void KeccakPermutationOnWords(uint64_t *state)
+void KeccakPermutation(unsigned char *state)
 {
     unsigned int round;
     for(round = 0; round < nrRounds; round++) {
-        theta(state);
-        rho(state);
-        pi(state);
-        chi(state);
-        iota(state, round);
+        theta((uint64_t*)state);
+        rho((uint64_t*)state);
+        pi((uint64_t*)state);
+        chi((uint64_t*)state);
+        iota((uint64_t*)state, round);
     }
+}
+
+void KeccakAbsorb(unsigned char *state, const unsigned char *data, unsigned int laneCount)
+{
+    KeccakXorDataIntoState(state, data, laneCount*8);
+    KeccakPermutation(state);
 }
 
 /*
@@ -178,103 +198,8 @@ void iota(uint64_t *A, unsigned int indexRound)
 }
 
 /*
- * Keccak Initialization Functions
+ * Squeezing
  */
-int LFSR86540(uint8_t *LFSR)
-{
-    int result = ((*LFSR) & 0x01) != 0;
-    if (((*LFSR) & 0x80) != 0) {
-        // Primitive polynomial over GF(2): x^8+x^6+x^5+x^4+1
-        (*LFSR) = ((*LFSR) << 1) ^ 0x71;
-    }
-    else {
-        (*LFSR) <<= 1;
-    }
-    return result;
-}
-
-void KeccakInitializeRoundConstants()
-{
-    uint8_t LFSRstate = 0x01;
-    unsigned int i, j, bitPosition;
-
-    for(i=0; i<nrRounds; i++) {
-        KeccakRoundConstants[i] = 0;
-        for(j=0; j<7; j++) {
-            bitPosition = (1<<j)-1; //2^j-1
-            if (LFSR86540(&LFSRstate)) {
-                KeccakRoundConstants[i] ^= (uint64_t)1<<bitPosition;
-            }
-        }
-    }
-}
-
-void KeccakInitializeRhoOffsets()
-{
-    unsigned int x, y, t, newX, newY;
-
-    KeccakRhoOffsets[index(0, 0)] = 0;
-    x = 1;
-    y = 0;
-    for(t=0; t<24; t++) {
-        KeccakRhoOffsets[index(x, y)] = ((t+1)*(t+2)/2) % 64;
-        newX = (0*x+1*y) % 5;
-        newY = (2*x+3*y) % 5;
-        x = newX;
-        y = newY;
-    }
-}
-
-void KeccakInitialize()
-{
-    KeccakInitializeRoundConstants();
-    KeccakInitializeRhoOffsets();
-}
-
-void KeccakInitializeState(unsigned char *state)
-{
-    memset(state, 0, KeccakPermutationSizeInBytes);
-}
-
-void KeccakAbsorb576bits(unsigned char *state, const unsigned char *data)
-{
-    KeccakPermutationAfterXor(state, data, 72);
-}
-
-void KeccakAbsorb832bits(unsigned char *state, const unsigned char *data)
-{
-    KeccakPermutationAfterXor(state, data, 104);
-}
-
-void KeccakAbsorb1024bits(unsigned char *state, const unsigned char *data)
-{
-    KeccakPermutationAfterXor(state, data, 128);
-}
-
-void KeccakAbsorb1088bits(unsigned char *state, const unsigned char *data)
-{
-    KeccakPermutationAfterXor(state, data, 136);
-}
-
-void KeccakAbsorb1152bits(unsigned char *state, const unsigned char *data)
-{
-    KeccakPermutationAfterXor(state, data, 144);
-}
-
-void KeccakAbsorb1344bits(unsigned char *state, const unsigned char *data)
-{
-    KeccakPermutationAfterXor(state, data, 168);
-}
-
-void KeccakAbsorb(unsigned char *state, const unsigned char *data, unsigned int laneCount)
-{
-    KeccakPermutationAfterXor(state, data, laneCount*8);
-}
-
-void KeccakExtract1024bits(const unsigned char *state, unsigned char *data)
-{
-    memcpy(data, state, 128);
-}
 
 void KeccakExtract(const unsigned char *state, unsigned char *data, unsigned int laneCount)
 {

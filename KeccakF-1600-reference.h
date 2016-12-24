@@ -13,19 +13,13 @@ http://creativecommons.org/publicdomain/zero/1.0/
 
 #pragma once
 
+// Initialization
 void KeccakInitialize( void );
 void KeccakInitializeState(unsigned char *state);
+
+// Absorb and Permute
+void KeccakAbsorb(unsigned char *state, const unsigned char *data, unsigned int laneCount);
 void KeccakPermutation(unsigned char *state);
 
-void KeccakAbsorb576bits(unsigned char *state, const unsigned char *data);
-void KeccakAbsorb832bits(unsigned char *state, const unsigned char *data);
-void KeccakAbsorb1024bits(unsigned char *state, const unsigned char *data);
-void KeccakAbsorb1088bits(unsigned char *state, const unsigned char *data);
-void KeccakAbsorb1152bits(unsigned char *state, const unsigned char *data);
-void KeccakAbsorb1344bits(unsigned char *state, const unsigned char *data);
-
-void KeccakAbsorb(unsigned char *state, const unsigned char *data, unsigned int laneCount);
-
-void KeccakExtract1024bits(const unsigned char *state, unsigned char *data);
-
+// Squeezing
 void KeccakExtract(const unsigned char *state, unsigned char *data, unsigned int laneCount);

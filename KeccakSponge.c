@@ -44,27 +44,7 @@ void AbsorbQueue(spongeState *state)
 {
     // state->bitsInQueue is assumed to be equal to state->rate
 
-    if (state->rate == 576) {
-        KeccakAbsorb576bits(state->state, state->dataQueue);
-    }
-    else if (state->rate == 832) {
-        KeccakAbsorb832bits(state->state, state->dataQueue);
-    }
-    else if (state->rate == 1024) {
-        KeccakAbsorb1024bits(state->state, state->dataQueue);
-    }
-    else if (state->rate == 1088) {
-        KeccakAbsorb1088bits(state->state, state->dataQueue);
-    }
-    else if (state->rate == 1152) {
-        KeccakAbsorb1152bits(state->state, state->dataQueue);
-    }
-    else if (state->rate == 1344) {
-        KeccakAbsorb1344bits(state->state, state->dataQueue);
-    }
-    else {
-        KeccakAbsorb(state->state, state->dataQueue, state->rate/64);
-    }
+    KeccakAbsorb(state->state, state->dataQueue, state->rate/64);
 
     state->bitsInQueue = 0;
 }
@@ -86,47 +66,8 @@ int Absorb(spongeState *state, const unsigned char *data, unsigned long long dat
             wholeBlocks = (databitlen-i)/state->rate;
             curData = data+i/8;
 
-            switch(state->rate) {
-                case 576:
-                    for(j=0; j<wholeBlocks; j++, curData+=576/8) {
-                        KeccakAbsorb576bits(state->state, curData);
-                    }
-                    break;
-
-                case 832:
-                    for(j=0; j<wholeBlocks; j++, curData+=832/8) {
-                        KeccakAbsorb832bits(state->state, curData);
-                    }
-                    break;
-
-                case 1024:
-                    for(j=0; j<wholeBlocks; j++, curData+=1024/8) {
-                        KeccakAbsorb1024bits(state->state, curData);
-                    }
-                    break;
-
-                case 1088:
-                    for(j=0; j<wholeBlocks; j++, curData+=1088/8) {
-                        KeccakAbsorb1088bits(state->state, curData);
-                    }
-                    break;
-
-                case 1152:
-                    for(j=0; j<wholeBlocks; j++, curData+=1152/8) {
-                        KeccakAbsorb1152bits(state->state, curData);
-                    }
-                    break;
-
-                case 1344:
-                    for(j=0; j<wholeBlocks; j++, curData+=1344/8) {
-                        KeccakAbsorb1344bits(state->state, curData);
-                    }
-                    break;
-            
-                default:
-                    for(j=0; j<wholeBlocks; j++, curData+=state->rate/8) {
-                        KeccakAbsorb(state->state, curData, state->rate/64);
-                    }
+            for(j = 0; j < wholeBlocks; j++, curData += state->rate/8) {
+                KeccakAbsorb(state->state, curData, state->rate/64);
             }
 
             i += wholeBlocks*state->rate;
@@ -172,15 +113,10 @@ void PadAndSwitchToSqueezingPhase(spongeState *state)
     }
     state->dataQueue[(state->rate-1)/8] |= 1 << ((state->rate-1) % 8);
     AbsorbQueue(state);
+
+    KeccakExtract(state->state, state->dataQueue, state->rate/64);
+    state->bitsAvailableForSqueezing = state->rate;
     
-    if (state->rate == 1024) {
-        KeccakExtract1024bits(state->state, state->dataQueue);
-        state->bitsAvailableForSqueezing = 1024;
-    }
-    else {
-        KeccakExtract(state->state, state->dataQueue, state->rate/64);
-        state->bitsAvailableForSqueezing = state->rate;
-    }
     state->squeezing = 1;
 }
 
@@ -199,14 +135,8 @@ int Squeeze(spongeState *state, unsigned char *output, unsigned long long output
         if (state->bitsAvailableForSqueezing == 0) {
             KeccakPermutation(state->state);
 
-            if (state->rate == 1024) {
-                KeccakExtract1024bits(state->state, state->dataQueue);
-                state->bitsAvailableForSqueezing = 1024;
-            }
-            else {
-                KeccakExtract(state->state, state->dataQueue, state->rate/64);
-                state->bitsAvailableForSqueezing = state->rate;
-            }
+            KeccakExtract(state->state, state->dataQueue, state->rate/64);
+            state->bitsAvailableForSqueezing = state->rate;
         }
 
         partialBlock = state->bitsAvailableForSqueezing;
