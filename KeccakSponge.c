@@ -39,15 +39,6 @@ SpongeReturn InitSponge(SpongeState * state, uint32_t rate, uint32_t capacity)
     return SUCCESS;
 }
 
-void AbsorbQueue(SpongeState * state)
-{
-    // state->bitsInQueue is assumed to be equal to state->rate
-
-    KeccakAbsorb(state->state, state->dataQueue, state->rate);
-
-    state->bitsInQueue = 0;
-}
-
 SpongeReturn Absorb(SpongeState * state, const uint8_t * data, uint64_t dataBitLen)
 {
     if ((state->bitsInQueue % 8) != 0) {
@@ -103,7 +94,8 @@ SpongeReturn Absorb(SpongeState * state, const uint8_t * data, uint64_t dataBitL
             // A partial block will be left open for more data.
             // If it is the last data, the data will be padded prior to squeezing.
             if (state->bitsInQueue == state->rate) {
-                AbsorbQueue(state);
+                KeccakAbsorb(state->state, state->dataQueue, state->rate);
+                state->bitsInQueue = 0;
             }
 
             // If a partial byte is left over
@@ -128,7 +120,8 @@ void PadAndSwitchToSqueezingPhase(SpongeState * state)
         state->dataQueue[state->bitsInQueue/8] |= 1 << (state->bitsInQueue % 8);
 
         // Then absorb the queue as another whole block
-        AbsorbQueue(state);
+        KeccakAbsorb(state->state, state->dataQueue, state->rate);
+        state->bitsInQueue = 0;
 
         // Zero the queue to create a whole block of zeros
         memset(state->dataQueue, 0, state->rate/8);
@@ -145,7 +138,8 @@ void PadAndSwitchToSqueezingPhase(SpongeState * state)
     state->dataQueue[(state->rate - 1)/8] |= 1 << ((state->rate - 1) % 8);
 
     // Absorb the last block
-    AbsorbQueue(state);
+    KeccakAbsorb(state->state, state->dataQueue, state->rate);
+    state->bitsInQueue = 0;
 
     // Extract one block into the queue
     KeccakExtract(state->state, state->dataQueue, state->rate);

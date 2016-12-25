@@ -106,3 +106,6 @@ SpongeReturn Absorb(SpongeState * state, const uint8_t * data, uint64_t dataBitL
   *         SUCCESS     - Sponge initialized
   */
 SpongeReturn Squeeze(SpongeState * state, uint8_t * output, uint64_t outputLength);
+
+// Internal function for padding
+void PadAndSwitchToSqueezingPhase(SpongeState * state);
