@@ -68,9 +68,12 @@ ALIGN typedef struct SpongeStateStruct {
   * @param  rate        The value of the rate r.
   * @param  capacity    The value of the capacity c.
   * @pre    One must have r+c=1600 and the rate a multiple of 64 bits in this implementation.
-  * @return Zero if successful, 1 otherwise.
+  * @return SpongeReturn
+  *         BAD_RATE_CAPACITY - The r and c values are invalid for KeccakF[1600]
+  *         SUCCESS           - Sponge initialized
   */
 SpongeReturn InitSponge(SpongeState * state, uint32_t rate, uint32_t capacity);
+
 /**
   * Function to give input data for the sponge function to absorb.
   * @param  state       Pointer to the state of the sponge function initialized by InitSponge().
@@ -81,9 +84,15 @@ SpongeReturn InitSponge(SpongeState * state, uint32_t rate, uint32_t capacity);
   * @pre    In the previous call to Absorb(), databitLen was a multiple of 8.
   * @pre    The sponge function must be in the absorbing phase,
   *         i.e., Squeeze() must not have been called before.
-  * @return Zero if successful, 1 otherwise.
+  * @return SpongeReturn
+  *         PARTIAL_BYTES_IN_MULTIPLE_ABSORBS
+  *                           - Two Absorb calls in a row have had partial bytes.
+  *                           - Only the last call to Absorb may have a partial byte.
+  *         MODE_IS_SQUEEZING - Squeezing has begun, no more data can be added.
+  *         SUCCESS           - Sponge initialized
   */
 SpongeReturn Absorb(SpongeState * state, const uint8_t * data, uint64_t dataBitLen);
+
 /**
   * Function to squeeze output data from the sponge function.
   * If the sponge function was in the absorbing phase, this function 
@@ -92,6 +101,8 @@ SpongeReturn Absorb(SpongeState * state, const uint8_t * data, uint64_t dataBitL
   * @param  output      Pointer to the buffer where to store the output data.
   * @param  outputLength    The number of output bits desired.
   *                     It must be a multiple of 8.
-  * @return Zero if successful, 1 otherwise.
+  * @return SpongeReturn
+  *         BAD_HASHLEN - The output length must be a multiple of whole bytes.
+  *         SUCCESS     - Sponge initialized
   */
 SpongeReturn Squeeze(SpongeState * state, uint8_t * output, uint64_t outputLength);

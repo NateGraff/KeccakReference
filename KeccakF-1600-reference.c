@@ -17,34 +17,13 @@ http://creativecommons.org/publicdomain/zero/1.0/
 #include "KeccakSponge.h"
 #include "KeccakF-1600-reference.h"
 
-// Internal constants
-#define nrRounds 24
-#define nrLanes 25
-#define nrRows 5
-#define nrCols 5
 uint64_t KeccakRoundConstants[nrRounds];
 uint64_t KeccakRhoOffsets[nrRows][nrCols];
 
-// Initialization
-int32_t LFSR86540(uint8_t * LFSR);
-void KeccakInitializeRoundConstants();
-void KeccakInitializeRhoOffsets();
-
-// Absorbtion
-void KeccakXorDataIntoState(SpongeMatrix state, const uint8_t * data, uint32_t dataLengthInBytes);
-
-// Internal logic
+/*
+ *  Matrix <-> Array conversion for easy Absorption and Extraction
+ */
 #define index(x, y) ( ((x) % 5) + 5 * ((y) % 5) )
-
-uint64_t ROL64(uint64_t a, uint32_t offset) {
-    return ( ((uint64_t) a) << offset ) | ( ((uint64_t) a) >> (64 - offset) );
-}
-
-void theta(SpongeMatrix A);
-void rho(SpongeMatrix A);
-void pi(SpongeMatrix A);
-void chi(SpongeMatrix A);
-void iota(SpongeMatrix A, uint32_t indexRound);
 
 void stateArrayToMatrix(uint8_t * state, SpongeMatrix stateMatrix) {
     uint32_t x, y;
@@ -131,7 +110,7 @@ void KeccakInitialize(SpongeMatrix state)
 /*
  * Absorb and Permute
  */
-void KeccakXorDataIntoState(SpongeMatrix state, const uint8_t *data, uint32_t dataLengthInBytes)
+void KeccakXorDataIntoState(SpongeMatrix state, const uint8_t * data, uint32_t dataLengthInBytes)
 {
     uint8_t stateArray[KeccakPermutationSizeInBytes];
     uint32_t i;
@@ -167,6 +146,10 @@ void KeccakAbsorb(SpongeMatrix state, const uint8_t * data, uint32_t rate)
 /*
  * Keccak Round Steps
  */
+uint64_t ROL64(uint64_t a, uint32_t offset) {
+    return ( ((uint64_t) a) << offset ) | ( ((uint64_t) a) >> (64 - offset) );
+}
+
 void theta(SpongeMatrix A)
 {
     uint32_t x, y;
