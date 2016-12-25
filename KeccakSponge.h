@@ -13,6 +13,8 @@ http://creativecommons.org/publicdomain/zero/1.0/
 
 #pragma once
 
+#include <stdint.h>
+
 #define KeccakPermutationSize 1600
 #define KeccakPermutationSizeInBytes (KeccakPermutationSize/8)
 #define KeccakMaximumRate 1536
@@ -26,8 +28,10 @@ http://creativecommons.org/publicdomain/zero/1.0/
 #define ALIGN
 #endif
 
+typedef uint64_t SpongeMatrix[5][5];
+
 ALIGN typedef struct spongeStateStruct {
-    ALIGN unsigned char state[KeccakPermutationSizeInBytes];
+    SpongeMatrix state;
     ALIGN unsigned char dataQueue[KeccakMaximumRateInBytes];
     unsigned int rate;
     unsigned int capacity;

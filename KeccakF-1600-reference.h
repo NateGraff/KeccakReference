@@ -14,11 +14,11 @@ http://creativecommons.org/publicdomain/zero/1.0/
 #pragma once
 
 // Initialization
-void KeccakInitialize(unsigned char * state);
+void KeccakInitialize(SpongeMatrix state);
 
 // Absorb and Permute
-void KeccakAbsorb(unsigned char *state, const unsigned char *data, unsigned int laneCount);
-void KeccakPermutation(unsigned char *state);
+void KeccakAbsorb(SpongeMatrix state, const unsigned char *data, unsigned int laneCount);
+void KeccakPermutation(SpongeMatrix state);
 
 // Squeezing
-void KeccakExtract(const unsigned char *state, unsigned char *data, unsigned int laneCount);
+void KeccakExtract(SpongeMatrix state, unsigned char *data, unsigned int laneCount);
