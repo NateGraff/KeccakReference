@@ -125,9 +125,7 @@ void KeccakInitialize(SpongeMatrix state)
     KeccakInitializeRoundConstants();
     KeccakInitializeRhoOffsets();
 
-    unsigned char stateArray[KeccakPermutationSizeInBytes];
-    memset(stateArray, 0, KeccakPermutationSizeInBytes);
-    stateArrayToMatrix(stateArray, state);
+    memset(state, 0, sizeof(uint64_t) * nrRows * nrCols);
 }
 
 /*
@@ -241,7 +239,6 @@ void iota(SpongeMatrix A, unsigned int indexRound)
 /*
  * Squeezing
  */
-
 void KeccakExtract(SpongeMatrix state, unsigned char *data, unsigned int laneCount)
 {
     unsigned char stateArray[KeccakPermutationSizeInBytes];
