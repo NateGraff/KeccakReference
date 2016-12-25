@@ -19,9 +19,11 @@ http://creativecommons.org/publicdomain/zero/1.0/
 
 // Internal constants
 #define nrRounds 24
-uint64_t KeccakRoundConstants[nrRounds];
 #define nrLanes 25
-unsigned int KeccakRhoOffsets[nrLanes];
+#define nrRows 5
+#define nrCols 5
+uint64_t KeccakRoundConstants[nrRounds];
+uint64_t KeccakRhoOffsets[nrRows][nrCols];
 
 // Initialization
 int LFSR86540(uint8_t *LFSR);
@@ -72,7 +74,7 @@ void KeccakInitializeRoundConstants()
         for(j = 0; j < 7; j++) {
             bitPosition = (1 << j) - 1; // 2^j - 1
 
-            if (LFSR86540(&LFSRstate)) {
+            if(LFSR86540(&LFSRstate)) {
                 KeccakRoundConstants[i] ^= (uint64_t) 1 << bitPosition;
             }
         }
@@ -83,14 +85,14 @@ void KeccakInitializeRhoOffsets()
 {
     unsigned int x, y, newX, newY;
 
-    KeccakRhoOffsets[index(0, 0)] = 0;
+    KeccakRhoOffsets[0][0] = 0;
 
     x = 1;
     y = 0;
 
     unsigned int t;
     for(t = 0; t < 24; t++) {
-        KeccakRhoOffsets[index(x, y)] = ((t + 1) * (t + 2)/2) % 64;
+        KeccakRhoOffsets[x][y] = ((t + 1) * (t + 2)/2) % 64;
 
         newX = (0 * x + 1 * y) % 5;
         newY = (2 * x + 3 * y) % 5;
@@ -168,7 +170,7 @@ void rho(uint64_t *A)
 
     for(x = 0; x < 5; x++) {
         for(y = 0; y < 5; y++) {
-            A[index(x, y)] = ROL64(A[index(x, y)], KeccakRhoOffsets[index(x, y)]);
+            A[index(x, y)] = ROL64(A[index(x, y)], KeccakRhoOffsets[x][y]);
         }
     }
 }
