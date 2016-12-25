@@ -46,13 +46,19 @@ typedef enum {
 
 ALIGN typedef struct SpongeStateStruct {
     SpongeMatrix state;
+    
     ALIGN uint8_t dataQueue[KeccakMaximumRateInBytes];
+    uint32_t bitsInQueue;
+
     uint32_t rate;
     uint32_t capacity;
-    uint32_t bitsInQueue;
+    
     uint32_t fixedOutputLength;
+
     SpongeMode mode;
+
     uint32_t bitsAvailableForSqueezing;
+    
 } SpongeState;
 
 /**

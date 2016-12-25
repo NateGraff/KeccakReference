@@ -14,9 +14,9 @@ http://creativecommons.org/publicdomain/zero/1.0/
 #include "KeccakNISTInterface.h"
 #include "KeccakSponge.h"
 
-HashReturn Init(HashState * state, uint32_t hashbitlen)
+HashReturn Init(HashState * state, uint32_t hashBitLen)
 {
-    switch(hashbitlen) {
+    switch(hashBitLen) {
         case 0: // Default parameters, arbitrary length output
             InitSponge((SpongeState *) state, 1024, 576);
             break;
@@ -35,22 +35,22 @@ HashReturn Init(HashState * state, uint32_t hashbitlen)
         default:
             return BAD_HASHLEN;
     }
-    state->fixedOutputLength = hashbitlen;
+    state->fixedOutputLength = hashBitLen;
     return SUCCESS;
 }
 
-HashReturn Update(HashState * state, const BitSequence * data, DataLength databitlen)
+HashReturn Update(HashState * state, const BitSequence * data, DataLength dataBitLen)
 {
-    if ((databitlen % 8) == 0) {
-        return Absorb((SpongeState *) state, data, databitlen);
+    if ((dataBitLen % 8) == 0) {
+        return Absorb((SpongeState *) state, data, dataBitLen);
     }
     else {
-        HashReturn ret = Absorb((SpongeState*)state, data, databitlen - (databitlen % 8));
+        HashReturn ret = Absorb((SpongeState*)state, data, dataBitLen - (dataBitLen % 8));
         if (ret == SUCCESS) {
             unsigned char lastByte; 
             // Align the last partial byte to the least significant bits
-            lastByte = data[databitlen/8] >> (8 - (databitlen % 8));
-            return Absorb((SpongeState*)state, &lastByte, databitlen % 8);
+            lastByte = data[dataBitLen/8] >> (8 - (dataBitLen % 8));
+            return Absorb((SpongeState*)state, &lastByte, dataBitLen % 8);
         }
         else {
             return ret;
@@ -58,21 +58,21 @@ HashReturn Update(HashState * state, const BitSequence * data, DataLength databi
     }
 }
 
-HashReturn Final(HashState * state, BitSequence * hashval)
+HashReturn Final(HashState * state, BitSequence * hashVal)
 {
-    return Squeeze(state, hashval, state->fixedOutputLength);
+    return Squeeze(state, hashVal, state->fixedOutputLength);
 }
 
-HashReturn Hash(uint32_t hashbitlen, const BitSequence *data, DataLength databitlen, BitSequence *hashval)
+HashReturn Hash(uint32_t hashBitLen, const BitSequence *data, DataLength databitlen, BitSequence * hashVal)
 {
     HashState state;
     HashReturn result;
 
-    if ((hashbitlen != 224) && (hashbitlen != 256) && (hashbitlen != 384) && (hashbitlen != 512)) {
+    if ((hashBitLen != 224) && (hashBitLen != 256) && (hashBitLen != 384) && (hashBitLen != 512)) {
         return BAD_HASHLEN; // Only the four fixed output lengths available through this API
     }
 
-    result = Init(&state, hashbitlen);
+    result = Init(&state, hashBitLen);
 
     if (result != SUCCESS) {
         return result;
@@ -84,7 +84,7 @@ HashReturn Hash(uint32_t hashbitlen, const BitSequence *data, DataLength databit
         return result;
     }
 
-    result = Final(&state, hashval);
+    result = Final(&state, hashVal);
     
     return result;
 }

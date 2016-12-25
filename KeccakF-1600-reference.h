@@ -13,6 +13,8 @@ http://creativecommons.org/publicdomain/zero/1.0/
 
 #pragma once
 
+#include "KeccakSponge.h"
+
 // Initialization
 void KeccakInitialize(SpongeMatrix state);
 
