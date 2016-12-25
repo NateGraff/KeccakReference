@@ -17,7 +17,7 @@ http://creativecommons.org/publicdomain/zero/1.0/
 #include "KeccakSponge.h"
 #include "KeccakF-1600-reference.h"
 
-int InitSponge(spongeState *state, unsigned int rate, unsigned int capacity)
+int InitSponge(spongeState * state, uint32_t rate, uint32_t capacity)
 {
     if (rate+capacity != 1600) {
         return 1;
@@ -33,13 +33,13 @@ int InitSponge(spongeState *state, unsigned int rate, unsigned int capacity)
     
     memset(state->dataQueue, 0, KeccakMaximumRateInBytes);
     state->bitsInQueue = 0;
-    state->squeezing = 0;
+    state->mode = ABSORBING;
     state->bitsAvailableForSqueezing = 0;
 
     return 0;
 }
 
-void AbsorbQueue(spongeState *state)
+void AbsorbQueue(spongeState * state)
 {
     // state->bitsInQueue is assumed to be equal to state->rate
 
@@ -48,13 +48,13 @@ void AbsorbQueue(spongeState *state)
     state->bitsInQueue = 0;
 }
 
-int Absorb(spongeState *state, const unsigned char *data, uint64_t dataBitLen)
+int Absorb(spongeState * state, const uint8_t * data, uint64_t dataBitLen)
 {
     if ((state->bitsInQueue % 8) != 0) {
         return 1; // Only the last call may contain a partial byte
     }
  
-    if (state->squeezing) {
+    if(state->mode == SQUEEZING) {
         return 1; // Too late for additional input
     }
 
@@ -69,7 +69,7 @@ int Absorb(spongeState *state, const unsigned char *data, uint64_t dataBitLen)
             uint64_t wholeBlocks = (dataBitLen - bitsAbsorbed) / state->rate;
 
             // Pointer to the current offset
-            const unsigned char * curData = data + bitsAbsorbed/8;
+            const uint8_t * curData = data + bitsAbsorbed/8;
             uint64_t block;
 
             // Absorb blocks
@@ -109,7 +109,7 @@ int Absorb(spongeState *state, const unsigned char *data, uint64_t dataBitLen)
             // If a partial byte is left over
             if (partialByte > 0) {
                 // Mask the remaining bits
-                unsigned char mask = (1 << partialByte) - 1;
+                uint8_t mask = (1 << partialByte) - 1;
 
                 // Add the masked bits to the queue
                 state->dataQueue[state->bitsInQueue/8] = data[bitsAbsorbed/8] & mask;
@@ -121,7 +121,7 @@ int Absorb(spongeState *state, const unsigned char *data, uint64_t dataBitLen)
     return 0;
 }
 
-void PadAndSwitchToSqueezingPhase(spongeState *state)
+void PadAndSwitchToSqueezingPhase(spongeState * state)
 {
     if (state->bitsInQueue + 1 == state->rate) { // The queue is one bit short of a block
         // The MSB is the first bit of the pad10*1.
@@ -152,12 +152,12 @@ void PadAndSwitchToSqueezingPhase(spongeState *state)
     state->bitsAvailableForSqueezing = state->rate;
 
     // Switch the sponge to squeezing mode
-    state->squeezing = 1;
+    state->mode = SQUEEZING;
 }
 
-int Squeeze(spongeState *state, unsigned char *output, uint64_t outputLength)
+int Squeeze(spongeState * state, uint8_t * output, uint64_t outputLength)
 {
-    if (!state->squeezing) {
+    if (state->mode != SQUEEZING) {
         PadAndSwitchToSqueezingPhase(state);
     }
 
@@ -197,6 +197,6 @@ int Squeeze(spongeState *state, unsigned char *output, uint64_t outputLength)
         bitsSqueezed += bitsToSqueeze;
 
     }
-    
+
     return 0;
 }

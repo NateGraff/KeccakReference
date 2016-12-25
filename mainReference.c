@@ -8,14 +8,14 @@
 #define RED_COLOR     "\033[31m"
 #define GREEN_COLOR   "\033[32m"
 
-void KeccakN(unsigned int N, BitSequence * data, DataLength dataBitLen, char * outputBuf)
+void KeccakN(uint32_t N, BitSequence * data, DataLength dataBitLen, char * outputBuf)
 {
     BitSequence * output = calloc(sizeof(BitSequence), N/8);
 
     Hash(N, data, dataBitLen, output);
 
     char temp[10];
-    unsigned int i;
+    uint32_t i;
     for(i = 0; i < (N/8); i++)
     {
         sprintf(temp, "%02x", output[i]);
@@ -26,9 +26,9 @@ void KeccakN(unsigned int N, BitSequence * data, DataLength dataBitLen, char * o
     free(output);
 }
 
-unsigned int TestKeccakN(unsigned int N, char * inputData, unsigned int inputDataLen, char * expectedOutput)
+uint32_t TestKeccakN(uint32_t N, char * inputData, uint32_t inputDataLen, char * expectedOutput)
 {
-    printf("Running Keccak%d on %d-bit message '%s'\n", N, (unsigned int) inputDataLen*8, inputData);
+    printf("Running Keccak%d on %d-bit message '%s'\n", N, (uint32_t) inputDataLen*8, inputData);
 
     char outputBuf[1000];
 

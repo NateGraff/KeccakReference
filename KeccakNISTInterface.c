@@ -14,7 +14,7 @@ http://creativecommons.org/publicdomain/zero/1.0/
 #include "KeccakNISTInterface.h"
 #include "KeccakSponge.h"
 
-HashReturn Init(hashState *state, int hashbitlen)
+HashReturn Init(hashState * state, uint32_t hashbitlen)
 {
     switch(hashbitlen) {
         case 0: // Default parameters, arbitrary length output
@@ -39,7 +39,7 @@ HashReturn Init(hashState *state, int hashbitlen)
     return SUCCESS;
 }
 
-HashReturn Update(hashState *state, const BitSequence *data, DataLength databitlen)
+HashReturn Update(hashState * state, const BitSequence * data, DataLength databitlen)
 {
     if ((databitlen % 8) == 0) {
         return Absorb((spongeState*)state, data, databitlen);
@@ -58,12 +58,12 @@ HashReturn Update(hashState *state, const BitSequence *data, DataLength databitl
     }
 }
 
-HashReturn Final(hashState *state, BitSequence *hashval)
+HashReturn Final(hashState * state, BitSequence * hashval)
 {
     return Squeeze(state, hashval, state->fixedOutputLength);
 }
 
-HashReturn Hash(int hashbitlen, const BitSequence *data, DataLength databitlen, BitSequence *hashval)
+HashReturn Hash(uint32_t hashbitlen, const BitSequence *data, DataLength databitlen, BitSequence *hashval)
 {
     hashState state;
     HashReturn result;

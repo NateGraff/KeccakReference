@@ -26,17 +26,17 @@ uint64_t KeccakRoundConstants[nrRounds];
 uint64_t KeccakRhoOffsets[nrRows][nrCols];
 
 // Initialization
-int LFSR86540(uint8_t *LFSR);
+int32_t LFSR86540(uint8_t * LFSR);
 void KeccakInitializeRoundConstants();
 void KeccakInitializeRhoOffsets();
 
 // Absorbtion
-void KeccakXorDataIntoState(SpongeMatrix state, const unsigned char *data, unsigned int dataLengthInBytes);
+void KeccakXorDataIntoState(SpongeMatrix state, const uint8_t * data, uint32_t dataLengthInBytes);
 
 // Internal logic
 #define index(x, y) ( ((x) % 5) + 5 * ((y) % 5) )
 
-uint64_t ROL64(uint64_t a, unsigned int offset) {
+uint64_t ROL64(uint64_t a, uint32_t offset) {
     return ( ((uint64_t) a) << offset ) | ( ((uint64_t) a) >> (64 - offset) );
 }
 
@@ -44,10 +44,10 @@ void theta(SpongeMatrix A);
 void rho(SpongeMatrix A);
 void pi(SpongeMatrix A);
 void chi(SpongeMatrix A);
-void iota(SpongeMatrix A, unsigned int indexRound);
+void iota(SpongeMatrix A, uint32_t indexRound);
 
-void stateArrayToMatrix(unsigned char * state, SpongeMatrix stateMatrix) {
-    unsigned int x, y;
+void stateArrayToMatrix(uint8_t * state, SpongeMatrix stateMatrix) {
+    uint32_t x, y;
     for(x = 0; x < nrRows; x++) {
         for(y = 0; y < nrCols; y++) {
             stateMatrix[x][y] = ((uint64_t *) state)[index(x, y)];
@@ -55,8 +55,8 @@ void stateArrayToMatrix(unsigned char * state, SpongeMatrix stateMatrix) {
     }
 }
 
-void stateMatrixToArray(SpongeMatrix state, unsigned char * stateArray) {
-    unsigned int x, y;
+void stateMatrixToArray(SpongeMatrix state, uint8_t * stateArray) {
+    uint32_t x, y;
     for(x = 0; x < nrRows; x++) {
         for(y = 0; y < nrCols; y++) {
             ((uint64_t *) stateArray)[index(x, y)] = state[x][y];
@@ -67,7 +67,7 @@ void stateMatrixToArray(SpongeMatrix state, unsigned char * stateArray) {
 /*
  * Keccak Initialization Functions
  */
-int LFSR86540(uint8_t *LFSR)
+int32_t LFSR86540(uint8_t * LFSR)
 {
     int result = ((*LFSR) & 0x01) != 0;
     if (((*LFSR) & 0x80) != 0) {
@@ -83,9 +83,9 @@ int LFSR86540(uint8_t *LFSR)
 void KeccakInitializeRoundConstants()
 {
     uint8_t LFSRstate = 0x01;
-    unsigned int bitPosition;
+    uint32_t bitPosition;
     
-    unsigned int i, j;
+    uint32_t i, j;
     for(i = 0; i < nrRounds; i++) {
         KeccakRoundConstants[i] = 0;
 
@@ -101,14 +101,14 @@ void KeccakInitializeRoundConstants()
 
 void KeccakInitializeRhoOffsets()
 {
-    unsigned int x, y, newX, newY;
+    uint32_t x, y, newX, newY;
 
     KeccakRhoOffsets[0][0] = 0;
 
     x = 1;
     y = 0;
 
-    unsigned int t;
+    uint32_t t;
     for(t = 0; t < 24; t++) {
         KeccakRhoOffsets[x][y] = ((t + 1) * (t + 2)/2) % 64;
 
@@ -131,10 +131,10 @@ void KeccakInitialize(SpongeMatrix state)
 /*
  * Absorb and Permute
  */
-void KeccakXorDataIntoState(SpongeMatrix state, const unsigned char *data, unsigned int dataLengthInBytes)
+void KeccakXorDataIntoState(SpongeMatrix state, const uint8_t *data, uint32_t dataLengthInBytes)
 {
-    unsigned char stateArray[KeccakPermutationSizeInBytes];
-    unsigned int i;
+    uint8_t stateArray[KeccakPermutationSizeInBytes];
+    uint32_t i;
 
     stateMatrixToArray(state, stateArray);
 
@@ -148,7 +148,7 @@ void KeccakXorDataIntoState(SpongeMatrix state, const unsigned char *data, unsig
 
 void KeccakPermutation(SpongeMatrix state)
 {
-    unsigned int round;
+    uint32_t round;
     for(round = 0; round < nrRounds; round++) {
         theta(state);
         rho(state);
@@ -158,7 +158,7 @@ void KeccakPermutation(SpongeMatrix state)
     }
 }
 
-void KeccakAbsorb(SpongeMatrix state, const unsigned char *data, unsigned int rate)
+void KeccakAbsorb(SpongeMatrix state, const uint8_t * data, uint32_t rate)
 {
     KeccakXorDataIntoState(state, data, rate/8);
     KeccakPermutation(state);
@@ -169,7 +169,7 @@ void KeccakAbsorb(SpongeMatrix state, const unsigned char *data, unsigned int ra
  */
 void theta(SpongeMatrix A)
 {
-    unsigned int x, y;
+    uint32_t x, y;
     uint64_t C[5], D[5];
 
     for(x = 0; x < 5; x++) {
@@ -190,7 +190,7 @@ void theta(SpongeMatrix A)
 
 void rho(SpongeMatrix A)
 {
-    unsigned int x, y;
+    uint32_t x, y;
 
     for(x = 0; x < 5; x++) {
         for(y = 0; y < 5; y++) {
@@ -201,7 +201,7 @@ void rho(SpongeMatrix A)
 
 void pi(SpongeMatrix A)
 {
-    unsigned int x, y;
+    uint32_t x, y;
     SpongeMatrix tempA;
 
     for(x = 0; x < 5; x++) {
@@ -220,7 +220,7 @@ void pi(SpongeMatrix A)
 
 void chi(SpongeMatrix A)
 {
-    unsigned int x, y;
+    uint32_t x, y;
     uint64_t C[5];
 
     for(y = 0; y < 5; y++) { 
@@ -233,7 +233,7 @@ void chi(SpongeMatrix A)
     }
 }
 
-void iota(SpongeMatrix A, unsigned int indexRound)
+void iota(SpongeMatrix A, uint32_t indexRound)
 {
     A[0][0] ^= KeccakRoundConstants[indexRound];
 }
@@ -241,9 +241,9 @@ void iota(SpongeMatrix A, unsigned int indexRound)
 /*
  * Squeezing
  */
-void KeccakExtract(SpongeMatrix state, unsigned char *data, unsigned int rate)
+void KeccakExtract(SpongeMatrix state, uint8_t * data, uint32_t rate)
 {
-    unsigned char stateArray[KeccakPermutationSizeInBytes];
+    uint8_t stateArray[KeccakPermutationSizeInBytes];
 
     stateMatrixToArray(state, stateArray);
 
