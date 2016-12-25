@@ -31,20 +31,29 @@ http://creativecommons.org/publicdomain/zero/1.0/
 typedef uint64_t SpongeMatrix[5][5];
 
 typedef enum {
+    SUCCESS,
+    FAIL,
+    BAD_HASHLEN,
+    BAD_RATE_CAPACITY,
+    MODE_IS_SQUEEZING,
+    PARTIAL_BYTES_IN_MULTIPLE_ABSORBS,
+} SpongeReturn;
+
+typedef enum {
     ABSORBING,
     SQUEEZING,
-} spongeMode;
+} SpongeMode;
 
-ALIGN typedef struct spongeStateStruct {
+ALIGN typedef struct SpongeStateStruct {
     SpongeMatrix state;
     ALIGN uint8_t dataQueue[KeccakMaximumRateInBytes];
     uint32_t rate;
     uint32_t capacity;
     uint32_t bitsInQueue;
     uint32_t fixedOutputLength;
-    spongeMode mode;
+    SpongeMode mode;
     uint32_t bitsAvailableForSqueezing;
-} spongeState;
+} SpongeState;
 
 /**
   * Function to initialize the state of the Keccak[r, c] sponge function.
@@ -55,7 +64,7 @@ ALIGN typedef struct spongeStateStruct {
   * @pre    One must have r+c=1600 and the rate a multiple of 64 bits in this implementation.
   * @return Zero if successful, 1 otherwise.
   */
-int InitSponge(spongeState * state, uint32_t rate, uint32_t capacity);
+SpongeReturn InitSponge(SpongeState * state, uint32_t rate, uint32_t capacity);
 /**
   * Function to give input data for the sponge function to absorb.
   * @param  state       Pointer to the state of the sponge function initialized by InitSponge().
@@ -68,7 +77,7 @@ int InitSponge(spongeState * state, uint32_t rate, uint32_t capacity);
   *         i.e., Squeeze() must not have been called before.
   * @return Zero if successful, 1 otherwise.
   */
-int Absorb(spongeState * state, const uint8_t * data, uint64_t dataBitLen);
+SpongeReturn Absorb(SpongeState * state, const uint8_t * data, uint64_t dataBitLen);
 /**
   * Function to squeeze output data from the sponge function.
   * If the sponge function was in the absorbing phase, this function 
@@ -79,4 +88,4 @@ int Absorb(spongeState * state, const uint8_t * data, uint64_t dataBitLen);
   *                     It must be a multiple of 8.
   * @return Zero if successful, 1 otherwise.
   */
-int Squeeze(spongeState * state, uint8_t * output, uint64_t outputLength);
+SpongeReturn Squeeze(SpongeState * state, uint8_t * output, uint64_t outputLength);

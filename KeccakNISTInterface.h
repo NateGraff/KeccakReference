@@ -20,13 +20,8 @@ http://creativecommons.org/publicdomain/zero/1.0/
 typedef uint8_t BitSequence;
 typedef uint64_t DataLength;
 
-typedef enum {
-    SUCCESS = 0,
-    FAIL = 1,
-    BAD_HASHLEN = 2,
-} HashReturn;
-
-typedef spongeState hashState;
+typedef SpongeReturn HashReturn;
+typedef SpongeState HashState;
 
 /**
   * Function to initialize the state of the Keccak[r, c] sponge function.
@@ -38,7 +33,7 @@ typedef spongeState hashState;
   * @pre    The value of hashBitLen must be one of 0, 224, 256, 384 and 512.
   * @return SUCCESS if successful, BAD_HASHLEN if the value of hashBitLen is incorrect.
   */
-HashReturn Init(hashState * state, uint32_t hashBitLen);
+HashReturn Init(HashState * state, uint32_t hashBitLen);
 
 /**
   * Function to give input data for the sponge function to absorb.
@@ -50,7 +45,7 @@ HashReturn Init(hashState * state, uint32_t hashBitLen);
   * @pre    In the previous call to Absorb(), databitLen was a multiple of 8.
   * @return SUCCESS if successful, FAIL otherwise.
   */
-HashReturn Update(hashState * state, const BitSequence * data, DataLength databitlen);
+HashReturn Update(HashState * state, const BitSequence * data, DataLength databitlen);
 
 /**
   * Function to squeeze output data from the sponge function.
@@ -60,7 +55,7 @@ HashReturn Update(hashState * state, const BitSequence * data, DataLength databi
   * @param  hashval     Pointer to the buffer where to store the output data.
   * @return SUCCESS if successful, FAIL otherwise.
   */
-HashReturn Final(hashState * state, BitSequence *hashval);
+HashReturn Final(HashState * state, BitSequence *hashval);
 
 /**
   * Function to compute a hash using the Keccak[r, c] sponge function.

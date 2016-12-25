@@ -17,13 +17,13 @@ http://creativecommons.org/publicdomain/zero/1.0/
 #include "KeccakSponge.h"
 #include "KeccakF-1600-reference.h"
 
-int InitSponge(spongeState * state, uint32_t rate, uint32_t capacity)
+SpongeReturn InitSponge(SpongeState * state, uint32_t rate, uint32_t capacity)
 {
     if (rate+capacity != 1600) {
-        return 1;
+        return BAD_RATE_CAPACITY;
     }
-    if ((rate <= 0) || (rate >= 1600) || ((rate % 64) != 0)) {
-        return 1;
+    if ((rate >= 1600) || ((rate % 64) != 0)) {
+        return BAD_RATE_CAPACITY;
     }
 
     state->rate = rate;
@@ -36,10 +36,10 @@ int InitSponge(spongeState * state, uint32_t rate, uint32_t capacity)
     state->mode = ABSORBING;
     state->bitsAvailableForSqueezing = 0;
 
-    return 0;
+    return SUCCESS;
 }
 
-void AbsorbQueue(spongeState * state)
+void AbsorbQueue(SpongeState * state)
 {
     // state->bitsInQueue is assumed to be equal to state->rate
 
@@ -48,14 +48,14 @@ void AbsorbQueue(spongeState * state)
     state->bitsInQueue = 0;
 }
 
-int Absorb(spongeState * state, const uint8_t * data, uint64_t dataBitLen)
+SpongeReturn Absorb(SpongeState * state, const uint8_t * data, uint64_t dataBitLen)
 {
     if ((state->bitsInQueue % 8) != 0) {
-        return 1; // Only the last call may contain a partial byte
+        return PARTIAL_BYTES_IN_MULTIPLE_ABSORBS; // Only the last call may contain a partial byte
     }
  
     if(state->mode == SQUEEZING) {
-        return 1; // Too late for additional input
+        return MODE_IS_SQUEEZING; // Too late for additional input
     }
 
     uint64_t bitsAbsorbed = 0;
@@ -118,10 +118,10 @@ int Absorb(spongeState * state, const uint8_t * data, uint64_t dataBitLen)
             }
         }
     }
-    return 0;
+    return SUCCESS;
 }
 
-void PadAndSwitchToSqueezingPhase(spongeState * state)
+void PadAndSwitchToSqueezingPhase(SpongeState * state)
 {
     if (state->bitsInQueue + 1 == state->rate) { // The queue is one bit short of a block
         // The MSB is the first bit of the pad10*1.
@@ -155,7 +155,7 @@ void PadAndSwitchToSqueezingPhase(spongeState * state)
     state->mode = SQUEEZING;
 }
 
-int Squeeze(spongeState * state, uint8_t * output, uint64_t outputLength)
+SpongeReturn Squeeze(SpongeState * state, uint8_t * output, uint64_t outputLength)
 {
     if (state->mode != SQUEEZING) {
         PadAndSwitchToSqueezingPhase(state);
@@ -163,7 +163,7 @@ int Squeeze(spongeState * state, uint8_t * output, uint64_t outputLength)
 
     if ((outputLength % 8) != 0) {
         // Only multiple of 8 bits are allowed, truncation can be done at user level
-        return 1;
+        return BAD_HASHLEN;
     }
 
     uint64_t bitsSqueezed = 0;
@@ -198,5 +198,5 @@ int Squeeze(spongeState * state, uint8_t * output, uint64_t outputLength)
 
     }
 
-    return 0;
+    return SUCCESS;
 }

@@ -14,23 +14,23 @@ http://creativecommons.org/publicdomain/zero/1.0/
 #include "KeccakNISTInterface.h"
 #include "KeccakSponge.h"
 
-HashReturn Init(hashState * state, uint32_t hashbitlen)
+HashReturn Init(HashState * state, uint32_t hashbitlen)
 {
     switch(hashbitlen) {
         case 0: // Default parameters, arbitrary length output
-            InitSponge((spongeState*)state, 1024, 576);
+            InitSponge((SpongeState *) state, 1024, 576);
             break;
         case 224:
-            InitSponge((spongeState*)state, 1152, 448);
+            InitSponge((SpongeState *) state, 1152, 448);
             break;
         case 256:
-            InitSponge((spongeState*)state, 1088, 512);
+            InitSponge((SpongeState *) state, 1088, 512);
             break;
         case 384:
-            InitSponge((spongeState*)state, 832, 768);
+            InitSponge((SpongeState *) state, 832, 768);
             break;
         case 512:
-            InitSponge((spongeState*)state, 576, 1024);
+            InitSponge((SpongeState *) state, 576, 1024);
             break;
         default:
             return BAD_HASHLEN;
@@ -39,18 +39,18 @@ HashReturn Init(hashState * state, uint32_t hashbitlen)
     return SUCCESS;
 }
 
-HashReturn Update(hashState * state, const BitSequence * data, DataLength databitlen)
+HashReturn Update(HashState * state, const BitSequence * data, DataLength databitlen)
 {
     if ((databitlen % 8) == 0) {
-        return Absorb((spongeState*)state, data, databitlen);
+        return Absorb((SpongeState *) state, data, databitlen);
     }
     else {
-        HashReturn ret = Absorb((spongeState*)state, data, databitlen - (databitlen % 8));
+        HashReturn ret = Absorb((SpongeState*)state, data, databitlen - (databitlen % 8));
         if (ret == SUCCESS) {
             unsigned char lastByte; 
             // Align the last partial byte to the least significant bits
             lastByte = data[databitlen/8] >> (8 - (databitlen % 8));
-            return Absorb((spongeState*)state, &lastByte, databitlen % 8);
+            return Absorb((SpongeState*)state, &lastByte, databitlen % 8);
         }
         else {
             return ret;
@@ -58,14 +58,14 @@ HashReturn Update(hashState * state, const BitSequence * data, DataLength databi
     }
 }
 
-HashReturn Final(hashState * state, BitSequence * hashval)
+HashReturn Final(HashState * state, BitSequence * hashval)
 {
     return Squeeze(state, hashval, state->fixedOutputLength);
 }
 
 HashReturn Hash(uint32_t hashbitlen, const BitSequence *data, DataLength databitlen, BitSequence *hashval)
 {
-    hashState state;
+    HashState state;
     HashReturn result;
 
     if ((hashbitlen != 224) && (hashbitlen != 256) && (hashbitlen != 384) && (hashbitlen != 512)) {
