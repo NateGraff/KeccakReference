@@ -43,7 +43,7 @@ void AbsorbQueue(spongeState *state)
 {
     // state->bitsInQueue is assumed to be equal to state->rate
 
-    KeccakAbsorb(state->state, state->dataQueue, state->rate/64);
+    KeccakAbsorb(state->state, state->dataQueue, state->rate);
 
     state->bitsInQueue = 0;
 }
@@ -74,7 +74,7 @@ int Absorb(spongeState *state, const unsigned char *data, uint64_t dataBitLen)
 
             // Absorb blocks
             for(block = 0; block < wholeBlocks; block++) {
-                KeccakAbsorb(state->state, curData, state->rate/64);
+                KeccakAbsorb(state->state, curData, state->rate);
                 curData += state->rate/8;
             }
 
@@ -123,22 +123,35 @@ int Absorb(spongeState *state, const unsigned char *data, uint64_t dataBitLen)
 
 void PadAndSwitchToSqueezingPhase(spongeState *state)
 {
-    if (state->bitsInQueue + 1 == state->rate) {
-        // If the queue is one bit short of a block
+    if (state->bitsInQueue + 1 == state->rate) { // The queue is one bit short of a block
+        // The MSB is the first bit of the pad10*1.
         state->dataQueue[state->bitsInQueue/8] |= 1 << (state->bitsInQueue % 8);
+
+        // Then absorb the queue as another whole block
         AbsorbQueue(state);
+
+        // Zero the queue to create a whole block of zeros
         memset(state->dataQueue, 0, state->rate/8);
     }
     else {
+        // Set the first bit after the data to the first 1 of the pad10*1
         memset(state->dataQueue + (state->bitsInQueue + 7)/8, 0, state->rate/8 - (state->bitsInQueue + 7)/8);
+
+        // Zero the queue after the data to create the 0*
         state->dataQueue[state->bitsInQueue/8] |= 1 << (state->bitsInQueue % 8);
     }
 
+    // Set the final 1 of the pad10*1
     state->dataQueue[(state->rate - 1)/8] |= 1 << ((state->rate - 1) % 8);
+
+    // Absorb the last block
     AbsorbQueue(state);
 
-    KeccakExtract(state->state, state->dataQueue, state->rate/64);
+    // Extract one block into the queue
+    KeccakExtract(state->state, state->dataQueue, state->rate);
     state->bitsAvailableForSqueezing = state->rate;
+
+    // Switch the sponge to squeezing mode
     state->squeezing = 1;
 }
 
@@ -149,33 +162,41 @@ int Squeeze(spongeState *state, unsigned char *output, uint64_t outputLength)
     }
 
     if ((outputLength % 8) != 0) {
-        return 1; // Only multiple of 8 bits are allowed, truncation can be done at user level
+        // Only multiple of 8 bits are allowed, truncation can be done at user level
+        return 1;
     }
 
     uint64_t bitsSqueezed = 0;
-    uint64_t partialBlock = 0;
+    uint64_t bitsToSqueeze = 0;
 
     while(bitsSqueezed < outputLength) {
 
         if (state->bitsAvailableForSqueezing == 0) {
+            // Permute the state
             KeccakPermutation(state->state);
 
-            KeccakExtract(state->state, state->dataQueue, state->rate/64);
+            // Extract another rate of bits
+            KeccakExtract(state->state, state->dataQueue, state->rate);
             state->bitsAvailableForSqueezing = state->rate;
         }
-
-        partialBlock = state->bitsAvailableForSqueezing;
         
-        if(partialBlock > (outputLength - bitsSqueezed)) {
-            partialBlock = outputLength - bitsSqueezed;
+        if(state->bitsAvailableForSqueezing > (outputLength - bitsSqueezed)) {
+            // Extract as many bits as are left
+            bitsToSqueeze = outputLength - bitsSqueezed;
+        } else {
+            // Extract as many bits as we can this round
+            bitsToSqueeze = state->bitsAvailableForSqueezing;
         }
         
-        memcpy(output + bitsSqueezed/8, state->dataQueue + (state->rate - state->bitsAvailableForSqueezing)/8, partialBlock/8);
+        memcpy(output + (bitsSqueezed / 8),
+               state->dataQueue + ((state->rate - state->bitsAvailableForSqueezing) / 8),
+               bitsToSqueeze / 8);
         
-        state->bitsAvailableForSqueezing -= partialBlock;
+        state->bitsAvailableForSqueezing -= bitsToSqueeze;
         
-        bitsSqueezed += partialBlock;
+        bitsSqueezed += bitsToSqueeze;
 
     }
+    
     return 0;
 }

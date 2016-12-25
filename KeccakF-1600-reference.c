@@ -158,9 +158,9 @@ void KeccakPermutation(SpongeMatrix state)
     }
 }
 
-void KeccakAbsorb(SpongeMatrix state, const unsigned char *data, unsigned int laneCount)
+void KeccakAbsorb(SpongeMatrix state, const unsigned char *data, unsigned int rate)
 {
-    KeccakXorDataIntoState(state, data, laneCount*8);
+    KeccakXorDataIntoState(state, data, rate/8);
     KeccakPermutation(state);
 }
 
@@ -211,7 +211,9 @@ void pi(SpongeMatrix A)
     }
     for(x = 0; x < 5; x++) {
         for(y = 0; y < 5; y++) {
-            A[(0 * x + 1 * y) % 5][(2 * x + 3 * y) % 5] = tempA[x][y];
+            uint8_t row = (0 * x + 1 * y) % 5;
+            uint8_t col = (2 * x + 3 * y) % 5;
+            A[row][col] = tempA[x][y];
         }
     }
 }
@@ -239,11 +241,11 @@ void iota(SpongeMatrix A, unsigned int indexRound)
 /*
  * Squeezing
  */
-void KeccakExtract(SpongeMatrix state, unsigned char *data, unsigned int laneCount)
+void KeccakExtract(SpongeMatrix state, unsigned char *data, unsigned int rate)
 {
     unsigned char stateArray[KeccakPermutationSizeInBytes];
 
     stateMatrixToArray(state, stateArray);
 
-    memcpy(data, stateArray, laneCount*8);
+    memcpy(data, stateArray, rate/8);
 }

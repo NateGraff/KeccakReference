@@ -17,8 +17,8 @@ http://creativecommons.org/publicdomain/zero/1.0/
 void KeccakInitialize(SpongeMatrix state);
 
 // Absorb and Permute
-void KeccakAbsorb(SpongeMatrix state, const unsigned char *data, unsigned int laneCount);
+void KeccakAbsorb(SpongeMatrix state, const unsigned char *data, unsigned int rate);
 void KeccakPermutation(SpongeMatrix state);
 
 // Squeezing
-void KeccakExtract(SpongeMatrix state, unsigned char *data, unsigned int laneCount);
+void KeccakExtract(SpongeMatrix state, unsigned char *data, unsigned int rate);
