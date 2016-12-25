@@ -11,6 +11,7 @@ and related or neighboring rights to the source code in this file.
 http://creativecommons.org/publicdomain/zero/1.0/
 */
 
+#include <stdint.h>
 #include <string.h>
 
 #include "KeccakSponge.h"
@@ -47,52 +48,73 @@ void AbsorbQueue(spongeState *state)
     state->bitsInQueue = 0;
 }
 
-int Absorb(spongeState *state, const unsigned char *data, unsigned long long databitlen)
+int Absorb(spongeState *state, const unsigned char *data, uint64_t dataBitLen)
 {
-    unsigned long long i, j, wholeBlocks;
-    unsigned int partialBlock, partialByte;
-    const unsigned char *curData;
-
     if ((state->bitsInQueue % 8) != 0) {
         return 1; // Only the last call may contain a partial byte
     }
+ 
     if (state->squeezing) {
         return 1; // Too late for additional input
     }
 
-    i = 0;
-    while(i < databitlen) {
-        if ((state->bitsInQueue == 0) && (databitlen >= state->rate) && (i <= (databitlen-state->rate))) {
-            wholeBlocks = (databitlen-i)/state->rate;
-            curData = data+i/8;
+    uint64_t bitsAbsorbed = 0;
 
-            for(j = 0; j < wholeBlocks; j++, curData += state->rate/8) {
+    while(bitsAbsorbed < dataBitLen) {
+
+        if ((state->bitsInQueue == 0) && (dataBitLen >= state->rate) && (bitsAbsorbed <= (dataBitLen - state->rate))) {
+            // If the data is at least a whole block and no data is waiting
+            
+            // How many whole blocks fit into the data
+            uint64_t wholeBlocks = (dataBitLen - bitsAbsorbed) / state->rate;
+
+            // Pointer to the current offset
+            const unsigned char * curData = data + bitsAbsorbed/8;
+            uint64_t block;
+
+            // Absorb blocks
+            for(block = 0; block < wholeBlocks; block++) {
                 KeccakAbsorb(state->state, curData, state->rate/64);
+                curData += state->rate/8;
             }
 
-            i += wholeBlocks*state->rate;
+            bitsAbsorbed += wholeBlocks * state->rate;
         }
         else {
-            partialBlock = (unsigned int)(databitlen - i);
+            // How much data is left to absorb
+            uint64_t partialBlock = dataBitLen - bitsAbsorbed;
 
-            if (partialBlock+state->bitsInQueue > state->rate) {
-                partialBlock = state->rate-state->bitsInQueue;
+            // If the data left to absorb and the data in queue is greater than the rate,
+            // process only as much new data as will fit after the data in queue.
+            if (partialBlock + state->bitsInQueue > state->rate) {
+                partialBlock = state->rate - state->bitsInQueue;
             }
 
-            partialByte = partialBlock % 8;
+            // Truncate to byte-align the new data length
+            uint64_t partialByte = partialBlock % 8;
             partialBlock -= partialByte;
-            memcpy(state->dataQueue+state->bitsInQueue/8, data+i/8, partialBlock/8);
-            state->bitsInQueue += partialBlock;
-            i += partialBlock;
 
+            // Append the new data to the queue
+            memcpy(state->dataQueue + state->bitsInQueue/8, data + bitsAbsorbed/8, partialBlock/8);
+            state->bitsInQueue += partialBlock;
+            bitsAbsorbed += partialBlock;
+
+            // Absorb the queue if it fills a whole block
+            // A partial block will be left open for more data.
+            // If it is the last data, the data will be padded prior to squeezing.
             if (state->bitsInQueue == state->rate) {
                 AbsorbQueue(state);
             }
+
+            // If a partial byte is left over
             if (partialByte > 0) {
-                unsigned char mask = (1 << partialByte)-1;
-                state->dataQueue[state->bitsInQueue/8] = data[i/8] & mask;
+                // Mask the remaining bits
+                unsigned char mask = (1 << partialByte) - 1;
+
+                // Add the masked bits to the queue
+                state->dataQueue[state->bitsInQueue/8] = data[bitsAbsorbed/8] & mask;
                 state->bitsInQueue += partialByte;
-                i += partialByte;
+                bitsAbsorbed += partialByte;
             }
         }
     }
@@ -101,39 +123,40 @@ int Absorb(spongeState *state, const unsigned char *data, unsigned long long dat
 
 void PadAndSwitchToSqueezingPhase(spongeState *state)
 {
-    // Note: the bits are numbered from 0=LSB to 7=MSB
     if (state->bitsInQueue + 1 == state->rate) {
-        state->dataQueue[state->bitsInQueue/8 ] |= 1 << (state->bitsInQueue % 8);
+        // If the queue is one bit short of a block
+        state->dataQueue[state->bitsInQueue/8] |= 1 << (state->bitsInQueue % 8);
         AbsorbQueue(state);
         memset(state->dataQueue, 0, state->rate/8);
     }
     else {
-        memset(state->dataQueue + (state->bitsInQueue+7)/8, 0, state->rate/8 - (state->bitsInQueue+7)/8);
-        state->dataQueue[state->bitsInQueue/8 ] |= 1 << (state->bitsInQueue % 8);
+        memset(state->dataQueue + (state->bitsInQueue + 7)/8, 0, state->rate/8 - (state->bitsInQueue + 7)/8);
+        state->dataQueue[state->bitsInQueue/8] |= 1 << (state->bitsInQueue % 8);
     }
-    state->dataQueue[(state->rate-1)/8] |= 1 << ((state->rate-1) % 8);
+
+    state->dataQueue[(state->rate - 1)/8] |= 1 << ((state->rate - 1) % 8);
     AbsorbQueue(state);
 
     KeccakExtract(state->state, state->dataQueue, state->rate/64);
     state->bitsAvailableForSqueezing = state->rate;
-
     state->squeezing = 1;
 }
 
-int Squeeze(spongeState *state, unsigned char *output, unsigned long long outputLength)
+int Squeeze(spongeState *state, unsigned char *output, uint64_t outputLength)
 {
-    unsigned long long i;
-    unsigned int partialBlock;
-
     if (!state->squeezing) {
         PadAndSwitchToSqueezingPhase(state);
     }
+
     if ((outputLength % 8) != 0) {
         return 1; // Only multiple of 8 bits are allowed, truncation can be done at user level
     }
 
-    i = 0;
-    while(i < outputLength) {
+    uint64_t bitsSqueezed = 0;
+    uint64_t partialBlock = 0;
+
+    while(bitsSqueezed < outputLength) {
+
         if (state->bitsAvailableForSqueezing == 0) {
             KeccakPermutation(state->state);
 
@@ -142,12 +165,17 @@ int Squeeze(spongeState *state, unsigned char *output, unsigned long long output
         }
 
         partialBlock = state->bitsAvailableForSqueezing;
-        if ((unsigned long long)partialBlock > outputLength - i) {
-            partialBlock = (unsigned int)(outputLength - i);
+        
+        if(partialBlock > (outputLength - bitsSqueezed)) {
+            partialBlock = outputLength - bitsSqueezed;
         }
-        memcpy(output+i/8, state->dataQueue+(state->rate-state->bitsAvailableForSqueezing)/8, partialBlock/8);
+        
+        memcpy(output + bitsSqueezed/8, state->dataQueue + (state->rate - state->bitsAvailableForSqueezing)/8, partialBlock/8);
+        
         state->bitsAvailableForSqueezing -= partialBlock;
-        i += partialBlock;
+        
+        bitsSqueezed += partialBlock;
+
     }
     return 0;
 }
