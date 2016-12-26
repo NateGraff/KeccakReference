@@ -201,8 +201,6 @@ void iota(SpongeMatrix A, uint32_t indexRound)
 /*
  * Squeezing
  */
-
-#include <stdio.h>
 void KeccakExtract(SpongeMatrix state, uint8_t * data, uint32_t rate)
 {
     uint8_t stateArray[KeccakPermutationSizeInBytes];
