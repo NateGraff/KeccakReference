@@ -21,29 +21,6 @@ uint64_t KeccakRoundConstants[nrRounds];
 uint64_t KeccakRhoOffsets[nrRows][nrCols];
 
 /*
- *  Matrix <-> Array conversion for easy Absorption and Extraction
- */
-#define index(x, y) ( ((x) % 5) + 5 * ((y) % 5) )
-
-void stateArrayToMatrix(uint8_t * state, SpongeMatrix stateMatrix) {
-    uint32_t x, y;
-    for(x = 0; x < nrRows; x++) {
-        for(y = 0; y < nrCols; y++) {
-            stateMatrix[x][y] = ((uint64_t *) state)[index(x, y)];
-        }
-    }
-}
-
-void stateMatrixToArray(SpongeMatrix state, uint8_t * stateArray) {
-    uint32_t x, y;
-    for(x = 0; x < nrRows; x++) {
-        for(y = 0; y < nrCols; y++) {
-            ((uint64_t *) stateArray)[index(x, y)] = state[x][y];
-        }
-    }
-}
-
-/*
  * Keccak Initialization Functions
  */
 int32_t LFSR86540(uint8_t * LFSR)
@@ -113,10 +90,10 @@ void KeccakInitialize(SpongeMatrix state)
 void KeccakXorDataIntoState(SpongeMatrix state, const uint8_t * data, uint32_t dataLengthInBytes)
 {
     uint8_t stateArray[KeccakPermutationSizeInBytes];
-    uint32_t i;
 
     stateMatrixToArray(state, stateArray);
 
+    uint32_t i;
     for(i = 0; i < dataLengthInBytes; i++)
     {
         stateArray[i] ^= data[i];
@@ -224,6 +201,8 @@ void iota(SpongeMatrix A, uint32_t indexRound)
 /*
  * Squeezing
  */
+
+#include <stdio.h>
 void KeccakExtract(SpongeMatrix state, uint8_t * data, uint32_t rate)
 {
     uint8_t stateArray[KeccakPermutationSizeInBytes];
@@ -231,4 +210,33 @@ void KeccakExtract(SpongeMatrix state, uint8_t * data, uint32_t rate)
     stateMatrixToArray(state, stateArray);
 
     memcpy(data, stateArray, rate/8);
+}
+
+/*
+ *  Matrix <-> Array conversion for easy Absorption and Extraction
+ */
+void stateArrayToMatrix(uint8_t * state, SpongeMatrix stateMatrix) {
+    // Cast the 200-byte array into a 25-word array
+    uint64_t * stateWordArray = (uint64_t * ) state;
+
+    // Copy the array elements into the matrix
+    uint32_t x, y;
+    for(x = 0; x < nrRows; x++) {
+        for(y = 0; y < nrCols; y++) {
+            stateMatrix[x][y] = stateWordArray[x + (5 * y)];
+        }
+    }
+}
+
+void stateMatrixToArray(SpongeMatrix state, uint8_t * stateArray) {
+    // Cast the 200-byte array into a 25-word array
+    uint64_t * stateWordArray = (uint64_t * ) stateArray;
+
+    // Copy the matrix elements into the array
+    uint32_t x, y;
+    for(x = 0; x < nrRows; x++) {
+        for(y = 0; y < nrCols; y++) {
+            stateWordArray[x + (5 * y)] = state[x][y];
+        }
+    }
 }
