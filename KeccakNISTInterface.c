@@ -3,6 +3,7 @@
  */
 
 #include <stdint.h>
+#include <string.h>
 
 #include "KeccakNISTInterface.h"
 #include "KeccakSponge.h"
@@ -48,7 +49,11 @@ HashReturn Update(HashState * state, const BitSequence * data, DataLength dataBi
             // Align the last partial byte to the least significant bits
             uint8_t lastByte = data[dataBitLen / 8] >> (8 - (dataBitLen % 8));
 
-            return Absorb(state, &lastByte, dataBitLen % 8);
+            returnVal = Absorb(state, &lastByte, dataBitLen % 8);
+
+            memset(&lastByte, 0, sizeof(lastByte)); // Clear memory of secret data
+
+            return returnVal;
         }
         else {
             return returnVal;
@@ -83,6 +88,8 @@ HashReturn Hash(uint32_t hashBitLen, const BitSequence * data, DataLength databi
     }
 
     returnVal = Final(&state, hashVal);
+
+    EraseState(&state);
     
     return returnVal;
 }

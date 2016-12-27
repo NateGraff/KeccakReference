@@ -91,6 +91,8 @@ void KeccakXorDataIntoState(SpongeMatrix state, const uint8_t * data, uint32_t d
     }
 
     stateArrayToMatrix(stateArray, state);
+
+    memset(&stateArray, 0, sizeof(stateArray)); // Clear memory of secret data
 }
 
 void KeccakPermutation(SpongeMatrix state)
@@ -137,6 +139,10 @@ void theta(SpongeMatrix A)
             A[x][y] ^= D[x];
         }
     }
+
+    // Clear memory of secret data
+    memset(&C, 0, sizeof(C));
+    memset(&D, 0, sizeof(D));
 }
 
 void rho(SpongeMatrix A)
@@ -167,6 +173,8 @@ void pi(SpongeMatrix A)
             A[row][col] = tempA[x][y];
         }
     }
+
+    memset(&tempA, 0, sizeof(tempA)); // Clear memory of secret data
 }
 
 void chi(SpongeMatrix A)
@@ -182,6 +190,8 @@ void chi(SpongeMatrix A)
             A[x][y] = C[x];
         }
     }
+
+    memset(&C, 0, sizeof(C)); // Clear memory of secret data
 }
 
 void iota(SpongeMatrix A, uint32_t indexRound)
@@ -199,6 +209,8 @@ void KeccakExtract(SpongeMatrix state, uint8_t * data, uint32_t rate)
     stateMatrixToArray(state, stateArray);
 
     memcpy(data, stateArray, rate/8);
+
+    memset(&stateArray, 0, sizeof(stateArray)); // Clear memory of secret data
 }
 
 /*

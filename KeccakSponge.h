@@ -98,5 +98,11 @@ SpongeReturn Absorb(SpongeState * state, const uint8_t * data, uint64_t dataBitL
   */
 SpongeReturn Squeeze(SpongeState * state, uint8_t * output, uint64_t outputLength);
 
+/**
+  * Erases memory used by the sponge function state to avoid leaking secret data.
+  * @param  state       Pointer to the state of the sponge function initialized by InitSponge()
+  */
+void EraseState(SpongeState * state);
+
 // Internal function for padding
 void PadAndSwitchToSqueezingPhase(SpongeState * state);

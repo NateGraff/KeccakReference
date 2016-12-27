@@ -185,3 +185,7 @@ SpongeReturn Squeeze(SpongeState * state, uint8_t * output, uint64_t outputLengt
 
     return SUCCESS;
 }
+
+void EraseState(SpongeState * state){
+    memset(state, 0, sizeof(SpongeState));
+}
