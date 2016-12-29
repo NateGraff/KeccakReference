@@ -44,7 +44,12 @@ int main(int argc, char * argv[]) {
 
 	// Hash the input data
 	uint8_t outputData[hashBitLen];
-	Hash(hashBitLen, inputData, 8*inputFileSize, outputData);
+
+	HashReturn returnVal;
+	returnVal = Hash(hashBitLen, inputData, 8*inputFileSize, outputData);
+	if(returnVal != SUCCESS) {
+		abort();
+	}
 
 	// Print the hash of the input data
 	char outputBuf[2*hashBitLen/8 + 1];
