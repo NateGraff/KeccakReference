@@ -79,17 +79,21 @@ int main(int argc, char * argv[]) {
 	// Hash the input data
 	uint8_t outputData[hashBitLen];
 
-	HashReturn returnVal;
-	returnVal = Hash(hashBitLen, inputData, 8*inputFileSize, outputData);
-	if(returnVal != SUCCESS) {
-		fprintf(stderr, "Error hashing data");
-		abort();
+	for(uint32_t bitsToIgnore = 0; bitsToIgnore < 8; bitsToIgnore++) {
+		HashReturn returnVal;
+
+		returnVal = Hash(hashBitLen, inputData, 8*inputFileSize - bitsToIgnore, outputData);
+		
+		if(returnVal != SUCCESS) {
+			fprintf(stderr, "Error hashing data");
+			abort();
+		}
+
+		// Print the hash of the input data
+		printHexBytes(outputData, hashBitLen/8);
 	}
 
 	free(inputData);
-
-	// Print the hash of the input data
-	printHexBytes(outputData, hashBitLen/8);
 
 	return 0;
 }
