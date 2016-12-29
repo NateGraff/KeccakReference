@@ -12,6 +12,34 @@
 
 #define hashBitLen 256
 
+void printHexBytes(uint8_t * data, uint32_t byteCount);
+
+void printHexBytes(uint8_t * data, uint32_t byteCount) {
+
+	// Allocate output string
+	char * outputBuf = calloc(2*byteCount + 1, sizeof(char));
+	if(outputBuf == NULL) {
+		fprintf(stderr, "Unable to allocate output buffer\n");
+		abort();
+	}
+
+	// Convert to hex and copy into string
+    for(uint32_t i = 0; i < byteCount; i++)
+    {
+		char temp[3];
+        sprintf(temp, "%02x", data[i]);
+        strncpy((outputBuf + (2*i)), temp, 2);
+    }
+
+    // Null-terminate string
+    outputBuf[2 * byteCount] = 0;
+
+    // Print string
+    printf("%s\n", outputBuf);
+
+    free(outputBuf);
+}
+
 int main(int argc, char * argv[]) {
 	
 	// Check if we've been passed an input file
@@ -26,7 +54,7 @@ int main(int argc, char * argv[]) {
 	strncpy(inputFileName, argv[1], 100);
 	if((inputFile = fopen(inputFileName, "r")) == NULL) {
 		printf("Error opening %s\n", inputFileName);
-		return 1;
+		abort();
 	}
 
 	// Get the length of the file in bytes
@@ -39,8 +67,14 @@ int main(int argc, char * argv[]) {
 	// Read the input data from the file
 	uint8_t * inputData;
 	inputData = calloc(inputFileSize, sizeof(uint8_t));
+	if(inputData == NULL) {
+		fprintf(stderr, "Unable to allocate input data buffer\n");
+		abort();
+	}
 
 	fread(inputData, sizeof(uint8_t), inputFileSize, inputFile);
+
+	fclose(inputFile);
 
 	// Hash the input data
 	uint8_t outputData[hashBitLen];
@@ -48,22 +82,14 @@ int main(int argc, char * argv[]) {
 	HashReturn returnVal;
 	returnVal = Hash(hashBitLen, inputData, 8*inputFileSize, outputData);
 	if(returnVal != SUCCESS) {
+		fprintf(stderr, "Error hashing data");
 		abort();
 	}
 
+	free(inputData);
+
 	// Print the hash of the input data
-	char outputBuf[2*hashBitLen/8 + 1];
-
-	char temp[10];
-    uint32_t i;
-    for(i = 0; i < (hashBitLen/8); i++)
-    {
-        sprintf(temp, "%02x", outputData[i]);
-        strncpy((outputBuf+(2*i)), temp, 2);
-    }
-    outputBuf[2*hashBitLen/8] = 0;
-
-    printf("%s\n", outputBuf);
+	printHexBytes(outputData, hashBitLen/8);
 
 	return 0;
 }

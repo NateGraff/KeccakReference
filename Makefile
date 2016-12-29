@@ -18,6 +18,9 @@ mainFuzz: mainFuzz.c $(KECCAK_LIB)
 fuzz: mainFuzz afl-input
 	afl-fuzz -i afl-input -o afl-findings -t 2000 ./mainFuzz @@
 
+cleanFuzz:
+	rm -r afl-findings mainFuzz.dSYM
+
 clean:
 	rm mainReference mainFuzz
 
