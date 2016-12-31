@@ -27,12 +27,12 @@ const uint32_t minMessageLen = 1022;
 const uint32_t hashBitLen = 256;
 
 void generateRandomMessage(uint8_t * message, uint32_t messageLength) {
-	for(uint32_t j = 0; j < (1 + messageLength/8); j++) {
+	for(uint32_t j = 0; j <= (messageLength/8); j++) {
 		message[j] = (uint8_t) rand();
 	}
 
-	uint8_t mask = 0xff >> (8 - messageLength % 8);
-
+	// Random message is aligned to the MSB like the NIST interface expects
+	uint8_t mask = 0xff << (8 - messageLength % 8);
 	message[messageLength/8] = message[messageLength/8] & mask;
 }
 
