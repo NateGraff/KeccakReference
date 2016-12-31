@@ -68,15 +68,10 @@ void padMessage(uint8_t * message, uint8_t * padded_message, uint32_t messageLen
 }
 
 void generateVHDLTestVectors(uint32_t num_test) {
-    FILE * keccak_in;
-    FILE * keccak_code_in;
-    FILE * keccak_out;
-    FILE * keccak_code_out;
-
-    keccak_in = fopen("keccak_in.txt", "w");
-    keccak_code_in = fopen("keccak_code_in.txt", "w");
-	keccak_out = fopen("keccak_ref_out.txt", "w");
-	keccak_code_out = fopen("keccak_code_out.txt", "w");
+	FILE * keccak_in		= fopen("keccak_in.txt", "w");
+	FILE * keccak_code_in	= fopen("keccak_code_in.txt", "w");
+	FILE * keccak_out		= fopen("keccak_ref_out.txt", "w");
+	FILE * keccak_code_out	= fopen("keccak_code_out.txt", "w");
 
 	fprintf(keccak_in, "%d\n", num_test);
 
@@ -126,8 +121,7 @@ void generateVHDLTestVectors(uint32_t num_test) {
 
 		// Compute arbitrary-length output hash
 		HashState state;
-		BitSequence * hashOutput;
-		hashOutput = calloc(hashBitLen/8, sizeof(BitSequence));
+		BitSequence * hashOutput = calloc(hashBitLen/8, sizeof(BitSequence));
 
 		Init(&state, 0);
 		Update(&state, message, messageLength);
@@ -141,11 +135,11 @@ void generateVHDLTestVectors(uint32_t num_test) {
 		
 		// Print output hashes for hardware consumption
 		for(uint32_t j = 0; j < hashBitLen/64; j++) {
-				for(uint32_t k = 0; k < 8; k++) {
-					// Print the bytes in reverse order for each word
-					fprintf(keccak_out, "%02X", hashOutput[j * 8 + (7 - k)]);
-				}
-				fprintf(keccak_out, "\n"); // newline after each 64-bit word
+			for(uint32_t k = 0; k < 8; k++) {
+				// Print the bytes in reverse order for each word
+				fprintf(keccak_out, "%02X", hashOutput[j * 8 + (7 - k)]);
+			}
+			fprintf(keccak_out, "\n"); // newline after each 64-bit word
 		}
 		fprintf(keccak_out, "-\n"); // delimit with dashes
 
