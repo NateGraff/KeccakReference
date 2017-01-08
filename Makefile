@@ -15,3 +15,8 @@ clean:
 
 run: mainReference
 	./mainReference
+
+valgrind:
+	gcc mainReference.c $(KECCAK_LIB_C) -o mainReference -g -O0 $(COMPILER_FLAGS)
+	valgrind --leak-check=yes ./mainReference
+	rm mainReference
